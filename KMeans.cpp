@@ -194,7 +194,7 @@ void KMeans::run(std::vector<Point> allPoints) {
         }
         epoch++;
     }
-    //writing results //TODO improve
+    //writing results
     std::ofstream pointsFile;
     pointsFile.open(output_dir + "/" + std::to_string(K) + "-points.txt", std::ios::out);
     for (int i = 0; i < nPoints; i ++) {
