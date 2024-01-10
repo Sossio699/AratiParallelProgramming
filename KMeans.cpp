@@ -1,0 +1,222 @@
+//
+// Created by Niccolò Arati on 08/01/2024.
+//
+
+#include "KMeans.h"
+#include "cstdlib"
+#include "cfloat"
+#include <fstream>
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+
+
+Point::Point(int id, std::string line) {
+    pointId = id;
+    values = linetoVec(line);
+    dimensions = values.size();
+    clusterId = 0; //not assigned
+}
+
+int Point::getDimensions() {
+    return dimensions;
+}
+
+int Point::getClusterId() {
+    return clusterId;
+}
+
+int Point::getId() {
+    return pointId;
+}
+
+void Point::setClusterId(int c) {
+    clusterId = c;
+}
+
+double Point::getVal(int pos) {
+    return values[pos];
+}
+
+std::vector<double> Point::linetoVec(std::string &line) {
+    std::vector<double> values;
+    std::string tmp = "";
+    for (int i = 0; i < (int)line.length(); i ++) {
+        if ((48 <= int(line[i]) && int(line[i]) <= 57) || line[i] == '.') {
+            tmp += line[i];
+        }
+        else if (tmp.length() > 0) {
+            values.push_back(std::stod(tmp));
+            tmp = "";
+        }
+    }
+    if (tmp.length() > 0) {
+        values.push_back(std::stod(tmp));
+        tmp = "";
+    }
+    return values;
+}
+
+
+Cluster::Cluster(int clusterId, Point centroid) {
+    this->clusterId = clusterId;
+    for (int i = 0; i < centroid.getDimensions(); i ++) {
+        this->centroid.push_back(centroid.getVal(i));
+    }
+    this->addPoint(centroid);
+}
+
+void Cluster::addPoint(Point p) {
+    p.setClusterId(this->clusterId);
+    points.push_back(p);
+}
+
+void Cluster::removeAllPoints() {
+    points.clear();
+}
+
+int Cluster::getClusterId() {
+    return clusterId;
+}
+
+Point Cluster::getPoint(int pos) {
+    return points[pos];
+}
+
+int Cluster::getClusterSize() {
+    return points.size();
+}
+
+double Cluster::getCentroidPos(int pos) {
+    return centroid[pos];
+}
+
+void Cluster::setCentroidPos(int pos, double value) {
+    this->centroid[pos] = value;
+}
+
+
+KMeans::KMeans(int K, int epochs, std::string output_dir) {
+    this->K = K;
+    this->epochs = epochs;
+    this->output_dir = output_dir;
+    dimensions = 0;
+    nPoints = 0;
+}
+
+void KMeans::clearClusters() {
+    for (int i = 0; i < K; i ++) {
+        clusters[i].removeAllPoints();
+    }
+}
+
+int KMeans::getNearestClusterId(Point p) {
+    double sum = 0.0, min_dist = DBL_MAX;
+    int nearestClusterId;
+    for (int i = 0; i < K; i ++) {
+        double dist;
+        sum = 0.0;
+        if (dimensions == 1) {
+            dist = fabs(clusters[i].getCentroidPos(0) - p.getVal(0));
+        }
+        else {
+            for (int j = 0; j < dimensions; j ++) {
+                sum += pow(clusters[i].getCentroidPos(j) - p.getVal(j), 2.0);
+            }
+            dist = sqrt(sum);
+        }
+        if (dist < min_dist) {
+            min_dist = dist;
+            nearestClusterId = clusters[i].getClusterId();
+        }
+    }
+    return nearestClusterId;
+}
+
+void KMeans::run(std::vector<Point> allPoints) {
+    nPoints = allPoints.size();
+    dimensions = allPoints[0].getDimensions();
+    //initializing clusters
+    std::vector<int> usedPointsIds;
+    bool init;
+    for (int i = 1; i <= K; i ++) {
+        init = false;
+        while(!init) {
+            int index = rand() % nPoints;
+            if (std::find(usedPointsIds.begin(), usedPointsIds.end(), index) == usedPointsIds.end()) {
+                usedPointsIds.push_back(index);
+                allPoints[index].setClusterId(i);
+                Cluster cluster(i, allPoints[index]);
+                clusters.push_back(cluster);
+                init = true;
+            }
+        }
+    }
+    std::cout << "Clusters initialized = " << clusters.size() << std::endl << std::endl;
+    std::cout << "Running K-Means clustering.." << std::endl;
+    int epoch = 1;
+    bool run = true;
+    while(run) {
+        std::cout << "Epoch - " << epoch << " / " << epochs << std::endl;
+        bool done = true;
+        //add all points to their nearest cluster
+        for (int i = 0; i < nPoints; i ++) {
+            int currentClusterId = allPoints[i].getClusterId();
+            int nearestClusterId = getNearestClusterId(allPoints[i]);
+            if (currentClusterId != nearestClusterId) {
+                allPoints[i].setClusterId(nearestClusterId);
+                done = false;
+            }
+        }
+        //clear all existing clusters
+        clearClusters();
+        //reassign points to their new clusters
+        for (int i = 0; i < nPoints; i ++) {
+            //cluster index is ID-1
+            clusters[allPoints[i].getClusterId() - 1].addPoint(allPoints[i]);
+        }
+        //recalculating the center of each cluster
+        for (int i = 0; i < K; i ++) {
+            int clusterSize = clusters[i].getClusterSize();
+            for (int j = 0; j < dimensions; j ++) {
+                double sum = 0.0;
+                if (clusterSize > 0) {
+                    for (int p = 0; p < clusterSize; p ++) {
+                        sum += clusters[i].getPoint(p).getVal(j);
+                    }
+                    clusters[i].setCentroidPos(j, sum / clusterSize);
+                }
+            }
+        }
+        if (done || epoch >= epochs) {
+            std::cout << "Clustering completed in epoch : " << epoch << std::endl << std::endl;
+            run = false;
+        }
+        epoch++;
+    }
+    //writing results //TODO improve
+    std::ofstream pointsFile;
+    pointsFile.open(output_dir + "/" + std::to_string(K) + "-points.txt", std::ios::out);
+    for (int i = 0; i < nPoints; i ++) {
+        pointsFile << allPoints[i].getClusterId() << std::endl;
+    }
+    pointsFile.close();
+    //write cluster centers to file
+    std::ofstream outfile;
+    outfile.open(output_dir + "/" + std::to_string(K) + "-clusters.txt");
+    if (outfile.is_open()) {
+        for (int i = 0; i < K; i ++) {
+            std::cout << "Cluster " << clusters[i].getClusterId() << " centroid: ";
+            for (int j = 0; j < dimensions; j ++) {
+                std::cout << clusters[i].getCentroidPos(j) << " "; //output to console
+                outfile << clusters[i].getCentroidPos(j) << " "; //output to file
+            }
+            std::cout << std::endl;
+            outfile << std::endl;
+        }
+        outfile.close();
+    }
+    else {
+        std::cout << "Error: unable to write to clusters.txt";
+    }
+}
