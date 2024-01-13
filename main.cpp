@@ -2,8 +2,10 @@
 #include <fstream>
 #include <vector>
 #include "KMeans.h"
+#include "EditDistance.h"
 
 int main() {
+    //KMeans
     std::string output_dir = "C:/Users/Giulia/CLionProjects/ParallelProgramming";
     std::vector<Point> points;
     std::string line;
@@ -18,6 +20,24 @@ int main() {
         input.close();
         KMeans kmeans(2, 10, output_dir);
         kmeans.run(points);
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    //EditDistance
+    std::vector<std::string> vocabulary;
+    std::string word;
+    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/5000-words.txt");
+    if (words.is_open()) {
+        while (std::getline(words, word)) {
+            vocabulary.push_back(word);
+        }
+        words.close();
+        std::string target = "bout";
+        std::vector<std::string> results = stringSearch(vocabulary, target, 2);
+        for (int i = 0; i < (int)results.size(); i ++) {
+            std::cout << results[i] << std::endl;
+        }
     }
     else {
         std::cout << "Unable to open the file";

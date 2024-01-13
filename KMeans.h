@@ -12,9 +12,9 @@ class Point {
 public:
     Point(int id, std::string line);
 
-    int getDimensions();
-    int getClusterId();
-    int getId();
+    int getDimensions() const;
+    int getClusterId() const;
+    int getId() const;
     void setClusterId(int c);
     double getVal(int pos);
 
@@ -31,9 +31,8 @@ public:
     Cluster(int clusterId, Point centroid);
 
     void addPoint(Point p);
-    bool removePoint(int pointId);
     void removeAllPoints();
-    int getClusterId();
+    int getClusterId() const;
     Point getPoint(int pos);
     int getClusterSize();
     double getCentroidPos(int pos);

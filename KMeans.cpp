@@ -3,8 +3,8 @@
 //
 
 #include "KMeans.h"
-#include "cstdlib"
-#include "cfloat"
+#include <cstdlib>
+#include <cfloat>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -14,19 +14,19 @@
 Point::Point(int id, std::string line) {
     pointId = id;
     values = linetoVec(line);
-    dimensions = values.size();
+    dimensions = (int)values.size();
     clusterId = 0; //not assigned
 }
 
-int Point::getDimensions() {
+int Point::getDimensions() const {
     return dimensions;
 }
 
-int Point::getClusterId() {
+int Point::getClusterId() const {
     return clusterId;
 }
 
-int Point::getId() {
+int Point::getId() const {
     return pointId;
 }
 
@@ -45,14 +45,13 @@ std::vector<double> Point::linetoVec(std::string &line) {
         if ((48 <= int(line[i]) && int(line[i]) <= 57) || line[i] == '.') {
             tmp += line[i];
         }
-        else if (tmp.length() > 0) {
+        else if (!tmp.empty()) {
             values.push_back(std::stod(tmp));
             tmp = "";
         }
     }
-    if (tmp.length() > 0) {
+    if (!tmp.empty()) {
         values.push_back(std::stod(tmp));
-        tmp = "";
     }
     return values;
 }
@@ -75,7 +74,7 @@ void Cluster::removeAllPoints() {
     points.clear();
 }
 
-int Cluster::getClusterId() {
+int Cluster::getClusterId() const {
     return clusterId;
 }
 
@@ -84,7 +83,7 @@ Point Cluster::getPoint(int pos) {
 }
 
 int Cluster::getClusterSize() {
-    return points.size();
+    return (int)points.size();
 }
 
 double Cluster::getCentroidPos(int pos) {
@@ -111,7 +110,7 @@ void KMeans::clearClusters() {
 }
 
 int KMeans::getNearestClusterId(Point p) {
-    double sum = 0.0, min_dist = DBL_MAX;
+    double sum, min_dist = DBL_MAX;
     int nearestClusterId;
     for (int i = 0; i < K; i ++) {
         double dist;
@@ -134,7 +133,7 @@ int KMeans::getNearestClusterId(Point p) {
 }
 
 void KMeans::run(std::vector<Point> allPoints) {
-    nPoints = allPoints.size();
+    nPoints = (int)allPoints.size();
     dimensions = allPoints[0].getDimensions();
     //initializing clusters
     std::vector<int> usedPointsIds;
@@ -157,15 +156,15 @@ void KMeans::run(std::vector<Point> allPoints) {
     int epoch = 1;
     bool run = true;
     while(run) {
-        std::cout << "Epoch - " << epoch << " / " << epochs << std::endl;
-        bool done = true;
+        std::cout << "Epoch " << epoch << " / " << epochs << std::endl;
+        bool changed = false;
         //add all points to their nearest cluster
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = allPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(allPoints[i]);
             if (currentClusterId != nearestClusterId) {
                 allPoints[i].setClusterId(nearestClusterId);
-                done = false;
+                changed = true;
             }
         }
         //clear all existing clusters
@@ -188,7 +187,7 @@ void KMeans::run(std::vector<Point> allPoints) {
                 }
             }
         }
-        if (done || epoch >= epochs) {
+        if (!changed || epoch >= epochs) {
             std::cout << "Clustering completed in epoch : " << epoch << std::endl << std::endl;
             run = false;
         }
@@ -198,7 +197,7 @@ void KMeans::run(std::vector<Point> allPoints) {
     std::ofstream pointsFile;
     pointsFile.open(output_dir + "/" + std::to_string(K) + "-points.txt", std::ios::out);
     for (int i = 0; i < nPoints; i ++) {
-        pointsFile << allPoints[i].getClusterId() << std::endl;
+        pointsFile << allPoints[i].getId() << " " << allPoints[i].getClusterId() << std::endl;
     }
     pointsFile.close();
     //write cluster centers to file
