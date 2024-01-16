@@ -11,6 +11,15 @@ Point::Point(int id, std::string line) {
     clusterId = 0; //not assigned
 }
 
+Point::Point(const Point &p) {
+    this->pointId = p.getId();
+    for (int i = 0; i < p.getDimensions(); i ++) {
+        this->values.push_back(p.getVal(i));
+    }
+    this->dimensions = p.getDimensions();
+    this->clusterId = p.getClusterId();
+}
+
 int Point::getId() const {
     return pointId;
 }
@@ -35,7 +44,7 @@ void Point::setDimensions(int d) {
     dimensions = d;
 }
 
-double Point::getVal(int pos) {
+double Point::getVal(int pos) const {
     return values[pos];
 }
 
@@ -56,3 +65,4 @@ std::vector<double> Point::linetoVec(std::string &line) {
     }
     return values;
 }
+

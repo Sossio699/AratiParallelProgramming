@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include "KMeans.h"
+#include "KMeansOMP.h"
 #include "EditDistance.h"
 
 int main() {
@@ -18,12 +19,15 @@ int main() {
             id ++;
         }
         input.close();
-        KMeans kmeans(2, 10, output_dir);
-        kmeans.run(points);
+        KMeans kMeans(2, 10, output_dir);
+        kMeans.run(points);
+        KMeansOMP kMeansOmp(2, 10, output_dir);
+        kMeansOmp.run(points, 2);
     }
     else {
         std::cout << "Unable to open the file";
     }
+
     //EditDistance
     std::vector<std::string> vocabulary;
     std::string word;

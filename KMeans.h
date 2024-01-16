@@ -7,7 +7,6 @@
 
 #include <vector>
 #include <string>
-#include "Point.h"
 #include "Cluster.h"
 
 class KMeans {
