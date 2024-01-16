@@ -17,5 +17,7 @@ set(SOURCE_FILES main.cpp
         Cluster.h
         KMeansOMP.cpp
         KMeansOMP.h
+        EditDistanceOMP.cpp
+        EditDistanceOMP.h
 )
 add_executable(ParallelProgramming ${SOURCE_FILES})

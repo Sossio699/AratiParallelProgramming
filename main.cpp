@@ -4,6 +4,7 @@
 #include "KMeans.h"
 #include "KMeansOMP.h"
 #include "EditDistance.h"
+#include "EditDistanceOMP.h"
 
 int main() {
     //KMeans
@@ -39,8 +40,13 @@ int main() {
         words.close();
         std::string target = "bout";
         std::vector<std::string> results = stringSearch(vocabulary, target, 2);
+        std::vector<std::string> resultsPar = stringSearchOMP(vocabulary, target, 2, 2);
         for (int i = 0; i < (int)results.size(); i ++) {
             std::cout << results[i] << std::endl;
+        }
+        std::cout << std::endl;
+        for (int i = 0; i < (int)resultsPar.size(); i ++) {
+            std::cout << resultsPar[i] << std::endl;
         }
     }
     else {
@@ -48,4 +54,5 @@ int main() {
     }
 
     return 0;
+
 }

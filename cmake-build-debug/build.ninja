@@ -85,6 +85,12 @@ build CMakeFiles/ParallelProgramming.dir/KMeansOMP.cpp.obj: CXX_COMPILER__Parall
   OBJECT_DIR = CMakeFiles\ParallelProgramming.dir
   OBJECT_FILE_DIR = CMakeFiles\ParallelProgramming.dir
 
+build CMakeFiles/ParallelProgramming.dir/EditDistanceOMP.cpp.obj: CXX_COMPILER__ParallelProgramming_unscanned_Debug C$:/Users/Giulia/CLionProjects/ParallelProgramming/EditDistanceOMP.cpp || cmake_object_order_depends_target_ParallelProgramming
+  DEP_FILE = CMakeFiles\ParallelProgramming.dir\EditDistanceOMP.cpp.obj.d
+  FLAGS = -std=c++11 -fopenmp -g -std=gnu++17 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\ParallelProgramming.dir
+  OBJECT_FILE_DIR = CMakeFiles\ParallelProgramming.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target ParallelProgramming
@@ -93,7 +99,7 @@ build CMakeFiles/ParallelProgramming.dir/KMeansOMP.cpp.obj: CXX_COMPILER__Parall
 #############################################
 # Link the executable ParallelProgramming.exe
 
-build ParallelProgramming.exe: CXX_EXECUTABLE_LINKER__ParallelProgramming_Debug CMakeFiles/ParallelProgramming.dir/main.cpp.obj CMakeFiles/ParallelProgramming.dir/KMeans.cpp.obj CMakeFiles/ParallelProgramming.dir/EditDistance.cpp.obj CMakeFiles/ParallelProgramming.dir/Point.cpp.obj CMakeFiles/ParallelProgramming.dir/Cluster.cpp.obj CMakeFiles/ParallelProgramming.dir/KMeansOMP.cpp.obj
+build ParallelProgramming.exe: CXX_EXECUTABLE_LINKER__ParallelProgramming_Debug CMakeFiles/ParallelProgramming.dir/main.cpp.obj CMakeFiles/ParallelProgramming.dir/KMeans.cpp.obj CMakeFiles/ParallelProgramming.dir/EditDistance.cpp.obj CMakeFiles/ParallelProgramming.dir/Point.cpp.obj CMakeFiles/ParallelProgramming.dir/Cluster.cpp.obj CMakeFiles/ParallelProgramming.dir/KMeansOMP.cpp.obj CMakeFiles/ParallelProgramming.dir/EditDistanceOMP.cpp.obj
   FLAGS = -std=c++11 -fopenmp -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\ParallelProgramming.dir
