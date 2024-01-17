@@ -8,8 +8,12 @@
 #include <string>
 #include <vector>
 
-int levenshteinDist(std::string word1, std::string word2);
+int levenshteinDistFM(const std::string& word1, const std::string& word2);
 
-std::vector<std::string> stringSearch(std::vector<std::string> vocabulary, const std::string& target, int threshold);
+int levenshteinDistMR(const std::string& word1, const std::string& word2);
+
+int levenshteinDistRec(const std::string& word1, const std::string& word2, int m, int n);
+
+std::vector<std::string> stringSearch(const std::vector<std::string>& vocabulary, const std::string& target, int threshold);
 
 #endif //PARALLELPROGRAMMING_EDITDISTANCE_H

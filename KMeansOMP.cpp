@@ -55,7 +55,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     //initializing clusters
     std::vector<int> usedPointsIds;
     bool init;
-    #pragma omp parallel for default(none) private(init) firstprivate(algPoints) shared(usedPointsIds) num_threads(2)
+    #pragma omp parallel for default(none) private(init) shared(algPoints, usedPointsIds) num_threads(2)
     for (int i = 1; i <= K; i ++) {
         init = false;
         while(!init) {
@@ -92,7 +92,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         //clear all existing clusters
         clearClusters();
         //reassign points to their new clusters
-        #pragma omp parallel for default(none) firstprivate(algPoints) num_threads(2)
+        #pragma omp parallel for default(none) shared(algPoints) num_threads(2)
         for (int i = 0; i < nPoints; i ++) {
             //cluster index is ID-1
             clusters[algPoints[i].getClusterId() - 1].addPoint(algPoints[i]);

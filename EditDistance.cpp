@@ -3,9 +3,9 @@
 //
 
 #include "EditDistance.h"
+#include <cassert>
 
-//with full matrix approach
-int levenshteinDist(std::string word1, std::string word2) {
+int levenshteinDistFM(const std::string& word1, const std::string& word2) {
     int length1 = (int)word1.length();
     int length2 = (int)word2.length();
     int distMatrix[length1 + 1][length2 + 1]; //will store the calculated distance
@@ -34,10 +34,59 @@ int levenshteinDist(std::string word1, std::string word2) {
     return distMatrix[length1][length2];
 }
 
-std::vector<std::string> stringSearch(std::vector<std::string> vocabulary, const std::string& target, int threshold) {
+int levenshteinDistMR(const std::string& word1, const std::string& word2) {
+    int length1 = (int)word1.length();
+    int length2 = (int)word2.length();
+    std::vector<int> prevRow(length2 + 1, 0);
+    std::vector<int> currRow(length2 + 1, 0);
+
+    if (length1 == 0) {
+        return length2;
+    }
+    if (length2 == 0) {
+        return length1;
+    }
+    for (int j = 0; j <= length2; j ++) {
+        prevRow[j] = j;
+    }
+    for (int i = 0; i < length1; i ++) {
+        currRow[0] = i + 1;
+        for (int j = 0; j < length2; j ++) {
+            int deletionCost = prevRow[j + 1] + 1;
+            int insertionCost = currRow[j] + 1;
+            int substitutionCost;
+            if (word1[i] == word2[j]) {
+                substitutionCost = prevRow[j];
+            }
+            else {
+                substitutionCost = prevRow[j] + 1;
+            }
+            currRow[j + 1] = std::min(std::min(deletionCost, insertionCost), substitutionCost);
+        }
+        prevRow = currRow;
+    }
+    return currRow[length2];
+}
+
+int levenshteinDistRec(const std::string& word1, const std::string& word2, int m, int n) {
+    if (m == 0) {
+        return n;
+    }
+    if (n == 0) {
+        return m;
+    }
+    if (word1[m - 1] == word2[n - 1]) {
+        return levenshteinDistRec(word1, word2, m - 1, n - 1);
+    }
+    return 1 + std::min(std::min(levenshteinDistRec(word1, word2, m - 1, n), //deletion cost
+                                 levenshteinDistRec(word1, word2, m, n - 1)), //insertion cost
+                        levenshteinDistRec(word1, word2, m - 1, n - 1)); //substitution cost
+}
+
+std::vector<std::string> stringSearch(const std::vector<std::string>& vocabulary, const std::string& target, int threshold) {
     std::vector<std::string> results;
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
-        if (levenshteinDist(vocabulary[i], target) <= threshold) {
+        if (levenshteinDistFM(vocabulary[i], target) <= threshold) {
             results.push_back(vocabulary[i]);
         }
     }
