@@ -8,9 +8,14 @@
 #include <vector>
 #include <string>
 
-int levenshteinDistOMP(const std::string& word1, const std::string& word2, int threads);
+int levenshteinDistFM_OMP(const std::string& word1, const std::string& word2, int threads);
 
-std::vector<std::string> stringSearchOMP(const std::vector<std::string>& vocabulary,
-                                         const std::string& target, int threshold, int threads);
+int levenshteinDistMR_OMP(const std::string& word1, const std::string& word2, int threads);
+
+std::vector<std::string> stringSearchFM_OMP(const std::vector<std::string>& vocabulary,
+                                            const std::string& target, int threshold, int threads);
+
+std::vector<std::string> stringSearchMR_OMP(const std::vector<std::string>& vocabulary,
+                                            const std::string& target, int threshold, int threads);
 
 #endif //PARALLELPROGRAMMING_EDITDISTANCEOMP_H

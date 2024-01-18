@@ -5,7 +5,7 @@
 #include "EditDistanceOMP.h"
 
 //with full matrix approach
-int levenshteinDistOMP(const std::string& word1, const std::string& word2, int threads) {
+int levenshteinDistFM_OMP(const std::string& word1, const std::string& word2, int threads) {
     int length1 = (int)word1.length();
     int length2 = (int)word2.length();
     int distMatrix[length1 + 1][length2 + 1]; //will store the calculated distance
@@ -39,13 +39,64 @@ int levenshteinDistOMP(const std::string& word1, const std::string& word2, int t
     return distMatrix[length1][length2];
 }
 
-std::vector<std::string> stringSearchOMP(const std::vector<std::string>& vocabulary,
-                                         const std::string& target, int threshold, int threads) {
+int levenshteinDistMR_OMP(const std::string& word1, const std::string& word2, int threads) {
+    int length1 = (int)word1.length();
+    int length2 = (int)word2.length();
+    std::vector<int> prevRow(length2 + 1, 0);
+    std::vector<int> currRow(length2 + 1, 0);
+
+    if (length1 == 0) {
+        return length2;
+    }
+    if (length2 == 0) {
+        return length1;
+    }
+    for (int j = 0; j <= length2; j ++) {
+        prevRow[j] = j;
+    }
+    for (int i = 0; i < length1; i ++) {
+        currRow[0] = i + 1;
+        #pragma omp parallel for default(none) shared(word1, word2, length2, prevRow, currRow) \
+        firstprivate(i) num_threads(threads)
+        for (int j = 0; j < length2; j ++) {
+            int deletionCost = prevRow[j + 1] + 1;
+            int insertionCost = currRow[j] + 1;
+            int substitutionCost;
+            if (word1[i] == word2[j]) {
+                substitutionCost = prevRow[j];
+            }
+            else {
+                substitutionCost = prevRow[j] + 1;
+            }
+            currRow[j + 1] = std::min(std::min(deletionCost, insertionCost), substitutionCost);
+        }
+        prevRow = currRow;
+    }
+    return currRow[length2];
+}
+
+std::vector<std::string> stringSearchFM_OMP(const std::vector<std::string>& vocabulary,
+                                            const std::string& target, int threshold, int threads) {
     std::vector<std::string> results;
     #pragma omp parallel for default(none) shared(vocabulary, target, threads, threshold, results) num_threads(threads)
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
         #pragma omp flush(results)
-        if (levenshteinDistOMP(vocabulary[i], target, threads) <= threshold) {
+        if (levenshteinDistFM_OMP(vocabulary[i], target, threads) <= threshold) {
+            #pragma omp critical
+            results.push_back(vocabulary[i]);
+        }
+        #pragma omp flush(results)
+    }
+    return results;
+}
+
+std::vector<std::string> stringSearchMR_OMP(const std::vector<std::string>& vocabulary,
+                                            const std::string& target, int threshold, int threads) {
+    std::vector<std::string> results;
+    #pragma omp parallel for default(none) shared(vocabulary, target, threads, threshold, results) num_threads(threads)
+    for (int i = 0; i < (int)vocabulary.size(); i ++) {
+        #pragma omp flush(results)
+        if (levenshteinDistMR_OMP(vocabulary[i], target, threads) <= threshold) {
             #pragma omp critical
             results.push_back(vocabulary[i]);
         }

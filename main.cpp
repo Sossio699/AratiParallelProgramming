@@ -57,13 +57,14 @@ std::vector<double> compareTimeKMeans(int K, int epochs, const std::string& outp
     return timeResults;
 }
 
+
 double testStringSearchOMPTime(const std::vector<std::string>& vocabulary, const std::string& target,
                                int threshold, int nThreads) {
     auto t1 = high_resolution_clock::now();
     auto t2 = t1;
 
     t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsPar = stringSearchOMP(vocabulary, target, threshold, nThreads);
+    std::vector<std::string> resultsPar = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
     t2 = high_resolution_clock::now();
 
     duration<double, std::milli> time = t2 - t1;
@@ -77,20 +78,54 @@ std::vector<double> compareTimeStringSearch(const std::vector<std::string>& voca
     std::vector<double> timeResults;
 
     t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsSeq = stringSearch(vocabulary, target, threshold);
+    std::vector<std::string> resultsSeqFM = stringSearchFM(vocabulary, target, threshold);
     t2 = high_resolution_clock::now();
     duration<double, std::milli> time1 = t2 - t1;
     timeResults.push_back(time1.count());
 
     t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsPar = stringSearchOMP(vocabulary, target, threshold, nThreads);
+    std::vector<std::string> resultsParFM = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
     t2 = high_resolution_clock::now();
     duration<double, std::milli> time2 = t2 - t1;
     timeResults.push_back(time2.count());
 
+    t1 = high_resolution_clock::now();
+    std::vector<std::string> resultsSeqMR = stringSearchMR(vocabulary, target, threshold);
+    t2 = high_resolution_clock::now();
+    duration<double, std::milli> time3 = t2 - t1;
+    timeResults.push_back(time3.count());
+
+    t1 = high_resolution_clock::now();
+    std::vector<std::string> resultsParMR = stringSearchMR_OMP(vocabulary, target, threshold, nThreads);
+    t2 = high_resolution_clock::now();
+    duration<double, std::milli> time4 = t2 - t1;
+    timeResults.push_back(time4.count());
+
+    t1 = high_resolution_clock::now();
+    std::vector<std::string> resultsSeqRec = stringSearchRec(vocabulary, target, threshold);
+    t2 = high_resolution_clock::now();
+    duration<double, std::milli> time5 = t2 - t1;
+    timeResults.push_back(time5.count());
+
     return timeResults;
 }
 
+
+std::vector<std::string> readVocabulary(const std::string& fileName) {
+    std::vector<std::string> vocabulary;
+    std::string word;
+    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/" + fileName);
+    if (words.is_open()) {
+        while (std::getline(words, word)) {
+            vocabulary.push_back(word);
+        }
+        words.close();
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    return vocabulary;
+}
 
 int main() {
     //KMeans
@@ -106,10 +141,10 @@ int main() {
             id ++;
         }
         input.close();
-        KMeans kMeans(2, 10, output_dir);
+        KMeans kMeans(3, 12, output_dir);
         kMeans.run(points);
-        KMeansOMP kMeansOmp(2, 10, output_dir);
-        kMeansOmp.run(points, 2);
+        KMeansOMP kMeansOmp(3, 12, output_dir);
+        kMeansOmp.run(points, 4);
     }
     else {
         std::cout << "Unable to open the file";
@@ -126,8 +161,8 @@ int main() {
         words.close();
         std::string target = "bout";
         std::cout << "Beginning string search" << std::endl << std::endl;
-        std::vector<std::string> results = stringSearch(vocabulary, target, 2);
-        std::vector<std::string> resultsPar = stringSearchOMP(vocabulary, target, 2, 2);
+        std::vector<std::string> results = stringSearchFM(vocabulary, target, 2);
+        std::vector<std::string> resultsPar = stringSearchFM_OMP(vocabulary, target, 2, 2);
         std::ofstream output;
         output.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/stringSearch.txt");
         if (output.is_open()) {

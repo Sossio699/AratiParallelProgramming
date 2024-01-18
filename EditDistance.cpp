@@ -83,7 +83,8 @@ int levenshteinDistRec(const std::string& word1, const std::string& word2, int m
                         levenshteinDistRec(word1, word2, m - 1, n - 1)); //substitution cost
 }
 
-std::vector<std::string> stringSearch(const std::vector<std::string>& vocabulary, const std::string& target, int threshold) {
+std::vector<std::string> stringSearchFM(const std::vector<std::string>& vocabulary,
+                                        const std::string& target, int threshold) {
     std::vector<std::string> results;
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
         if (levenshteinDistFM(vocabulary[i], target) <= threshold) {
@@ -93,3 +94,24 @@ std::vector<std::string> stringSearch(const std::vector<std::string>& vocabulary
     return results;
 }
 
+std::vector<std::string> stringSearchMR(const std::vector<std::string>& vocabulary,
+                                        const std::string& target, int threshold) {
+    std::vector<std::string> results;
+    for (int i = 0; i < (int)vocabulary.size(); i ++) {
+        if (levenshteinDistMR(vocabulary[i], target) <= threshold) {
+            results.push_back(vocabulary[i]);
+        }
+    }
+    return results;
+}
+
+std::vector<std::string> stringSearchRec(const std::vector<std::string>& vocabulary,
+                                         const std::string& target, int threshold) {
+    std::vector<std::string> results;
+    for (int i = 0; i < (int)vocabulary.size(); i ++) {
+        if (levenshteinDistMR(vocabulary[i], target) <= threshold) {
+            results.push_back(vocabulary[i]);
+        }
+    }
+    return results;
+}

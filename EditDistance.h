@@ -14,6 +14,13 @@ int levenshteinDistMR(const std::string& word1, const std::string& word2);
 
 int levenshteinDistRec(const std::string& word1, const std::string& word2, int m, int n);
 
-std::vector<std::string> stringSearch(const std::vector<std::string>& vocabulary, const std::string& target, int threshold);
+std::vector<std::string> stringSearchFM(const std::vector<std::string>& vocabulary,
+                                        const std::string& target, int threshold);
+
+std::vector<std::string> stringSearchMR(const std::vector<std::string>& vocabulary,
+                                        const std::string& target, int threshold);
+
+std::vector<std::string> stringSearchRec(const std::vector<std::string>& vocabulary,
+                                         const std::string& target, int threshold);
 
 #endif //PARALLELPROGRAMMING_EDITDISTANCE_H
