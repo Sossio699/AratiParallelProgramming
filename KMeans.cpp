@@ -10,7 +10,7 @@
 #include <cmath>
 #include <algorithm>
 
-KMeans::KMeans(int K, int epochs, std::string output_dir) {
+KMeans::KMeans(int K, int epochs, const std::string& output_dir) {
     this->K = K;
     this->epochs = epochs;
     this->output_dir = output_dir;
@@ -24,7 +24,7 @@ void KMeans::clearClusters() {
     }
 }
 
-int KMeans::getNearestClusterId(Point p) {
+int KMeans::getNearestClusterId(const Point& p) {
     double sum, min_dist = DBL_MAX;
     int nearestClusterId;
     for (int i = 0; i < K; i ++) {
@@ -77,6 +77,7 @@ void KMeans::run(std::vector<Point> algPoints) {
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(algPoints[i]);
+            std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
             if (currentClusterId != nearestClusterId) {
                 algPoints[i].setClusterId(nearestClusterId);
                 changed = true;
@@ -110,11 +111,11 @@ void KMeans::run(std::vector<Point> algPoints) {
     }
     //writing results
     std::ofstream pointsFile;
-    pointsFile.open(output_dir + "/" + std::to_string(K) + "Means-points.txt", std::ios::out);
+    pointsFile.open(output_dir + "/" + std::to_string(K) + "Means-points.csv", std::ios::out);
     if (pointsFile.is_open()) {
         std::cout << "Writing assigned cluster for each point" << std::endl;
         for (int i = 0; i < nPoints; i++) {
-            pointsFile << algPoints[i].getId() << " " << algPoints[i].getClusterId() << std::endl;
+            pointsFile << algPoints[i].getId() << "," << algPoints[i].getClusterId() << "\n";
         }
         pointsFile.close();
     }
@@ -123,15 +124,15 @@ void KMeans::run(std::vector<Point> algPoints) {
     }
     //write cluster centers to file
     std::ofstream outfile;
-    outfile.open(output_dir + "/" + std::to_string(K) + "Means-clusters.txt");
+    outfile.open(output_dir + "/" + std::to_string(K) + "Means-clusters.csv");
     if (outfile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {
-            outfile << clusters[i].getClusterId() << " ";
+            outfile << clusters[i].getClusterId() << ",";
             for (int j = 0; j < dimensions; j ++) {
-                outfile << clusters[i].getCentroidPos(j) << " "; //output to file
+                outfile << clusters[i].getCentroidPos(j) << ","; //output to file
             }
-            outfile << std::endl;
+            outfile << "\n";
         }
         outfile.close();
     }

@@ -52,7 +52,7 @@ std::vector<double> Point::linetoVec(std::string &line) {
     std::vector<double> values;
     std::string tmp = "";
     for (int i = 0; i < (int)line.length(); i ++) {
-        if ((48 <= int(line[i]) && int(line[i]) <= 57) || line[i] == '.') {
+        if ((48 <= int(line[i]) && int(line[i]) <= 57) || line[i] == '.' || line[i] == '-') {
             tmp += line[i];
         }
         else if (!tmp.empty()) {

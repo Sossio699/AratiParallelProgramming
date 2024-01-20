@@ -3,7 +3,6 @@
 //
 
 #include "KMeansOMP.h"
-#include <cstdlib>
 #include <cfloat>
 #include <fstream>
 #include <iostream>
@@ -11,7 +10,7 @@
 #include <algorithm>
 #include <random>
 
-KMeansOMP::KMeansOMP(int K, int epochs, std::string output_dir) {
+KMeansOMP::KMeansOMP(int K, int epochs, const std::string& output_dir) {
     this->K = K;
     this->epochs = epochs;
     this->output_dir = output_dir;
@@ -36,8 +35,6 @@ int KMeansOMP::getNearestClusterId(const Point& p) {
             dist = fabs(clusters[i].getCentroidPos(0) - p.getVal(0));
         }
         else {
-            //#pragma omp parallel for default(none) shared(p) firstprivate(i) num_threads(2) \
-            reduction(+: sum)
             for (int j = 0; j < dimensions; j ++) {
                 sum += pow(clusters[i].getCentroidPos(j) - p.getVal(j), 2.0);
             }
@@ -76,8 +73,9 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         #pragma omp critical
         {
             usedPointsIds.push_back(index);
-            algPoints[index].setClusterId(i);
-            Cluster cluster(i, algPoints[index]);
+            int j = (int)clusters.size() + 1;
+            algPoints[index].setClusterId(j);
+            Cluster cluster(j, algPoints[index]);
             clusters.push_back((cluster));
         }
     }
@@ -91,10 +89,11 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         bool changed = false;
         //add all points to their nearest cluster
         std::cout << "Adding all points to their nearest cluster" << std::endl;
-        #pragma omp parallel for default(none) shared(algPoints, changed) num_threads(threads)
+        #pragma omp parallel for default(none) shared(algPoints, std::cout) reduction(||:changed) num_threads(threads)
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(algPoints[i]);
+            std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
             if (currentClusterId != nearestClusterId) {
                 #pragma omp critical
                 {
@@ -108,7 +107,6 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         clearClusters();
         //reassign points to their new clusters
         std::cout << "Reassigning points to their new clusters" << std::endl;
-        //#pragma omp parallel for default(none) shared(algPoints) num_threads(2)
         for (int i = 0; i < nPoints; i ++) {
             //cluster index is ID-1
             clusters[algPoints[i].getClusterId() - 1].addPoint(algPoints[i]);
@@ -137,11 +135,11 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     }
     //writing results
     std::ofstream pointsFile;
-    pointsFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-points.txt", std::ios::out);
+    pointsFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-points.csv", std::ios::out);
     if (pointsFile.is_open()) {
         std::cout << "Writing assigned cluster for each point" << std::endl;
         for (int i = 0; i < nPoints; i++) {
-            pointsFile << algPoints[i].getId() << " " << algPoints[i].getClusterId() << std::endl;
+            pointsFile << algPoints[i].getId() << "," << algPoints[i].getClusterId() << "\n";
         }
         pointsFile.close();
     }
@@ -149,18 +147,18 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         std::cout << "Error: unable to write point results" << std::endl;
     }
     //write cluster centers to file
-    std::ofstream outfile;
-    outfile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-clusters.txt");
-    if (outfile.is_open()) {
+    std::ofstream outFile;
+    outFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-clusters.csv");
+    if (outFile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {
-            outfile << clusters[i].getClusterId() << " ";
+            outFile << clusters[i].getClusterId() << ",";
             for (int j = 0; j < dimensions; j ++) {
-                outfile << clusters[i].getCentroidPos(j) << " "; //output to file
+                outFile << clusters[i].getCentroidPos(j) << ","; //output to file
             }
-            outfile << std::endl;
+            outFile << "\n";
         }
-        outfile.close();
+        outFile.close();
     }
     else {
         std::cout << "Error: unable to write cluster coordinates" << std::endl;

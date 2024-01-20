@@ -18,6 +18,25 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
+std::vector<Point> readPoints(const std::string& fileName) {
+    std::vector<Point> points;
+    std::string line;
+    std::ifstream input ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName);
+    if (input.is_open()) {
+        int id = 0;
+        while (std::getline(input, line)) {
+            Point p(id, line);
+            points.push_back(p);
+            id ++;
+        }
+        input.close();
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    return points;
+}
+
 double testKMeansOMPTime(int K, int epochs, const std::string& output_dir,
                          const std::vector<Point>& points, int nThreads) {
     auto t1 = high_resolution_clock::now();
@@ -57,6 +76,36 @@ std::vector<double> compareTimeKMeans(int K, int epochs, const std::string& outp
     return timeResults;
 }
 
+void testsKMeans() {
+    std::ofstream test1File;
+    test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1KM.csv", std::ios::out);
+    if (test1File.is_open()) {
+        std::vector<Point> points = readPoints("xclara.txt");
+        std::vector<double> results = compareTimeKMeans(10, 24, "C:/Users/Giulia/CLionProjects/ParallelProgramming/results", points, 16);
+        test1File << results[0] << "," << results[1] << "\n";
+        test1File.close();
+    }
+    else {
+        std::cout << "Error: unable to open the file" << std::endl;
+    }
+}
+
+
+std::vector<std::string> readVocabulary(const std::string& fileName) {
+    std::vector<std::string> vocabulary;
+    std::string word;
+    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName);
+    if (words.is_open()) {
+        while (std::getline(words, word)) {
+            vocabulary.push_back(word);
+        }
+        words.close();
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    return vocabulary;
+}
 
 double testStringSearchOMPTime(const std::vector<std::string>& vocabulary, const std::string& target,
                                int threshold, int nThreads) {
@@ -77,62 +126,160 @@ std::vector<double> compareTimeStringSearch(const std::vector<std::string>& voca
     auto t2 = t1;
     std::vector<double> timeResults;
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsSeqFM = stringSearchFM(vocabulary, target, threshold);
-    t2 = high_resolution_clock::now();
-    duration<double, std::milli> time1 = t2 - t1;
-    timeResults.push_back(time1.count());
+    double sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsSeqFM = stringSearchFM(vocabulary, target, threshold);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time1 = t2 - t1;
+        sum += time1.count();
+        std::cout << "Full matrix sequential, time(ms): " << time1.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsParFM = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
-    t2 = high_resolution_clock::now();
-    duration<double, std::milli> time2 = t2 - t1;
-    timeResults.push_back(time2.count());
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsParFM = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time2 = t2 - t1;
+        sum += time2.count();
+        std::cout << "Full Matrix parallel, time(ms): " << time2.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsSeqMR = stringSearchMR(vocabulary, target, threshold);
-    t2 = high_resolution_clock::now();
-    duration<double, std::milli> time3 = t2 - t1;
-    timeResults.push_back(time3.count());
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsParFM2 = stringSearchFM_OMP2(vocabulary, target, threshold, nThreads);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time3 = t2 - t1;
+        sum +=time3.count();
+        std::cout << "Full Matrix string search parallel, time(ms): " << time3.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsParMR = stringSearchMR_OMP(vocabulary, target, threshold, nThreads);
-    t2 = high_resolution_clock::now();
-    duration<double, std::milli> time4 = t2 - t1;
-    timeResults.push_back(time4.count());
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsSeqMR = stringSearchMR(vocabulary, target, threshold);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time4 = t2 - t1;
+        sum += time4.count();
+        std::cout << "Matrix Row sequential, time(ms): " << time4.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsSeqRec = stringSearchRec(vocabulary, target, threshold);
-    t2 = high_resolution_clock::now();
-    duration<double, std::milli> time5 = t2 - t1;
-    timeResults.push_back(time5.count());
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsParMR = stringSearchMR_OMP(vocabulary, target, threshold, nThreads);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time5 = t2 - t1;
+        sum += time5.count();
+        std::cout << "Matrix Row parallel, time(ms): " << time5.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
+
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsParMR2 = stringSearchMR_OMP2(vocabulary, target, threshold, nThreads);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time6 = t2 - t1;
+        sum += time6.count();
+        std::cout << "Matrix Row string search parallel, time(ms): " << time6.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
+
+    sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsSeqRec = stringSearchRec(vocabulary, target, threshold);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time7 = t2 - t1;
+        sum += time7.count();
+        std::cout << "Recursive, time(ms): " << time7.count() << std::endl;
+    }
+    timeResults.push_back(sum / 10);
 
     return timeResults;
 }
 
-
-std::vector<std::string> readVocabulary(const std::string& fileName) {
-    std::vector<std::string> vocabulary;
-    std::string word;
-    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/" + fileName);
-    if (words.is_open()) {
-        while (std::getline(words, word)) {
-            vocabulary.push_back(word);
+void testsEditDistance() {
+    //compare times between 5 algorithms, target = "bout", threshold = 2, nThreads = 2
+    std::ofstream test1File;
+    test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1ED.csv", std::ios::out);
+    if (test1File.is_open()) {
+        std::vector<std::string> vocabulary1 = readVocabulary("5000-words.txt");
+        std::cout << "5000 words, target = bout, threshold = 2, nThreads = 2" << std::endl;
+        std::vector<double> results1 = compareTimeStringSearch(vocabulary1, "bout", 2, 2);
+        test1File << 1;
+        for (int i = 0; i < (int)results1.size(); i ++) {
+            test1File << "," << results1[i];
         }
-        words.close();
+        test1File << "\n";
+        //nThreads = 10, 100, 1000
+        std::cout << std::endl << "5000 words, target = bout, threshold = 2, nThreads = 10" << std::endl;
+        std::vector<double> results2 = compareTimeStringSearch(vocabulary1, "bout", 2, 10);
+        test1File << 2;
+        for (int i = 0; i < (int)results2.size(); i ++) {
+            test1File << "," << results2[i];
+        }
+        test1File << "\n";
+        std::cout << std::endl << "5000 words, target = bout, threshold = 2, nThreads = 100" << std::endl;
+        std::vector<double> results3 = compareTimeStringSearch(vocabulary1, "bout", 2, 100);
+        test1File << 3;
+        for (int i = 0; i < (int)results3.size(); i ++) {
+            test1File << "," << results3[i];
+        }
+        test1File << "\n";
+        std::cout << std::endl << "5000 words, target = bout, threshold = 2, nThreads = 1000" << std::endl;
+        std::vector<double> results4 = compareTimeStringSearch(vocabulary1, "bout", 2, 1000);
+        test1File << 4;
+        for (int i = 0; i < (int)results4.size(); i ++) {
+            test1File << "," << results4[i];
+        }
+        test1File << "\n";
+        //higher threshold
+        std::cout << std::endl << "5000 words, target = bout, threshold = 4, nThreads = 10" << std::endl;
+        std::vector<double> results5 = compareTimeStringSearch(vocabulary1, "bout", 4, 10);
+        test1File << 5;
+        for (int i = 0; i < (int)results5.size(); i ++) {
+            test1File << "," << results5[i];
+        }
+        test1File << "\n";
+        test1File.close();
     }
     else {
-        std::cout << "Unable to open the file";
+        std::cout << "Error: unable to open the file" << std::endl;
     }
-    return vocabulary;
+
+
+    //Test Full Matrix approach with different configurations (due to first results)
+    std::ofstream test2File;
+    test2File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test2ED.csv", std::ios::out);
+    if (test2File.is_open()) {
+
+        test2File.close();
+    }
+    else {
+        std::cout << "Error: unable to open the file" << std::endl;
+    }
 }
 
 int main() {
+    testsKMeans();
+
+
+    testsEditDistance();
+    return 0;
+
     //KMeans
-    std::string output_dir = "C:/Users/Giulia/CLionProjects/ParallelProgramming";
+    std::string output_dir = "C:/Users/Giulia/CLionProjects/ParallelProgramming/results";
     std::vector<Point> points;
     std::string line;
-    std::ifstream input ("C:/Users/Giulia/CLionProjects/ParallelProgramming/data.txt");
+    std::ifstream input ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/data.txt");
     if (input.is_open()) {
         int id = 0;
         while (std::getline(input, line)) {
@@ -150,10 +297,11 @@ int main() {
         std::cout << "Unable to open the file";
     }
 
+
     //EditDistance
     std::vector<std::string> vocabulary;
     std::string word;
-    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/5000-words.txt");
+    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/5000-words.txt");
     if (words.is_open()) {
         while (std::getline(words, word)) {
             vocabulary.push_back(word);
@@ -164,7 +312,7 @@ int main() {
         std::vector<std::string> results = stringSearchFM(vocabulary, target, 2);
         std::vector<std::string> resultsPar = stringSearchFM_OMP(vocabulary, target, 2, 2);
         std::ofstream output;
-        output.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/stringSearch.txt");
+        output.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/stringSearch.txt");
         if (output.is_open()) {
             std::cout << "Writing results" << std::endl;
             for (int i = 0; i < (int) results.size(); i++) {

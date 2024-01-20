@@ -11,7 +11,7 @@
 
 class KMeansOMP {
 public:
-    KMeansOMP(int K, int epochs, std::string output_dir);
+    KMeansOMP(int K, int epochs, const std::string& output_dir);
 
     void run(std::vector<Point> allPoints, int threads);
 

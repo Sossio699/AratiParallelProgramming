@@ -11,7 +11,7 @@
 
 class KMeans {
 public:
-    KMeans(int K, int epochs, std::string output_dir);
+    KMeans(int K, int epochs, const std::string& output_dir);
 
     void run(std::vector<Point> allPoints);
 
@@ -21,7 +21,7 @@ private:
     std::string output_dir;
 
     void clearClusters();
-    int getNearestClusterId(Point p);
+    int getNearestClusterId(const Point& p);
 };
 
 #endif //PARALLELPROGRAMMING_KMEANS_H
