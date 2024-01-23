@@ -148,7 +148,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     }
     //write cluster centers to file
     std::ofstream outFile;
-    outFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-clusters.csv");
+    outFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-clusters.csv", std::ios::out);
     if (outFile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {

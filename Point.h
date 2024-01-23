@@ -7,10 +7,11 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 class Point {
 public:
-    Point(int id, std::string line);
+    Point(int id, std::string line, bool csv = false);
 
     Point (Point const &p);
 
@@ -27,7 +28,8 @@ private:
     int dimensions;
     std::vector<double> values;
 
-    std::vector<double> linetoVec(std::string &line);
+    std::vector<double> linetoVecTXT(std::string &line);
+    std::vector<double> linetoVecCSV(std::string &line);
 };
 
 

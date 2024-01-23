@@ -4,9 +4,14 @@
 
 #include "Point.h"
 
-Point::Point(int id, std::string line) {
+Point::Point(int id, std::string line, bool csv) {
     pointId = id;
-    values = linetoVec(line);
+    if (csv) {
+        values = linetoVecCSV(line);
+    }
+    else {
+        values = linetoVecTXT(line);
+    }
     dimensions = (int)values.size();
     clusterId = 0; //not assigned
 }
@@ -48,7 +53,7 @@ double Point::getVal(int pos) const {
     return values[pos];
 }
 
-std::vector<double> Point::linetoVec(std::string &line) {
+std::vector<double> Point::linetoVecTXT(std::string &line) {
     std::vector<double> values;
     std::string tmp = "";
     for (int i = 0; i < (int)line.length(); i ++) {
@@ -66,3 +71,12 @@ std::vector<double> Point::linetoVec(std::string &line) {
     return values;
 }
 
+std::vector<double> Point::linetoVecCSV(std::string &line) {
+    std::vector<double> values;
+    std::string coord;
+    std::stringstream s(line);
+    while(getline(s, coord, ',')) {
+        values.push_back(std::stod(coord));
+    }
+    return values;
+}

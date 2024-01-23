@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -18,14 +19,33 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
-std::vector<Point> readPoints(const std::string& fileName) {
+std::vector<Point> readPointsTXT(const std::string& fileName) {
     std::vector<Point> points;
     std::string line;
-    std::ifstream input ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName);
+    std::ifstream input ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName, std::ios::in);
     if (input.is_open()) {
         int id = 0;
         while (std::getline(input, line)) {
             Point p(id, line);
+            points.push_back(p);
+            id ++;
+        }
+        input.close();
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    return points;
+}
+
+std::vector<Point> readPointsCSV(const std::string& fileName) {
+    std::vector<Point> points;
+    std::string line;
+    std::ifstream input("C:/USers/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName, std::ios::in);
+    if (input.is_open()) {
+        int id = 0;
+        while (std::getline(input, line)) {
+            Point p(id, line, true);
             points.push_back(p);
             id ++;
         }
@@ -80,7 +100,7 @@ void testsKMeans() {
     std::ofstream test1File;
     test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1KM.csv", std::ios::out);
     if (test1File.is_open()) {
-        std::vector<Point> points = readPoints("xclara.txt");
+        std::vector<Point> points = readPointsTXT("xclara.txt");
         std::vector<double> results = compareTimeKMeans(10, 24, "C:/Users/Giulia/CLionProjects/ParallelProgramming/results", points, 16);
         test1File << results[0] << "," << results[1] << "\n";
         test1File.close();
@@ -88,13 +108,23 @@ void testsKMeans() {
     else {
         std::cout << "Error: unable to open the file" << std::endl;
     }
+
+    std::ofstream test2File;
+    test2File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test2KM.csv", std::ios::out);
+    if (test2File.is_open()) {
+
+        test2File.close();
+    }
+    else {
+        std::cout << "Error: unable to open the file" << std::endl;
+    }
 }
 
 
-std::vector<std::string> readVocabulary(const std::string& fileName) {
+std::vector<std::string> readVocabularyTXT(const std::string& fileName) {
     std::vector<std::string> vocabulary;
     std::string word;
-    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName);
+    std::ifstream words ("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName, std::ios::in);
     if (words.is_open()) {
         while (std::getline(words, word)) {
             vocabulary.push_back(word);
@@ -107,17 +137,55 @@ std::vector<std::string> readVocabulary(const std::string& fileName) {
     return vocabulary;
 }
 
+std::vector<std::string> readVocabularyCSV(const std::string& fileName) {
+    std::vector<std::string> vocabulary;
+    std::string word, line;
+    std::ifstream words("C:/Users/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName, std::ios::in);
+    if (words.is_open()) {
+        while(std::getline(words, line)) {
+            std::stringstream s(line);
+            getline(s, word, ',');
+            vocabulary.push_back(word);
+        }
+        words.close();
+    }
+    else {
+        std::cout << "Unable to open the file";
+    }
+    return vocabulary;
+}
+
+double testStringSearchTime(const std::vector<std::string>& vocabulary, const std::string& target, int threshold) {
+    auto t1 = high_resolution_clock::now();
+    auto t2 = t1;
+
+    double sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> results = stringSearchFM(vocabulary, target, threshold);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time = t2 - t1;
+        sum += time.count();
+    }
+
+    return sum / 10;
+}
+
 double testStringSearchOMPTime(const std::vector<std::string>& vocabulary, const std::string& target,
                                int threshold, int nThreads) {
     auto t1 = high_resolution_clock::now();
     auto t2 = t1;
 
-    t1 = high_resolution_clock::now();
-    std::vector<std::string> resultsPar = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
-    t2 = high_resolution_clock::now();
+    double sum = 0.0;
+    for (int i = 0; i < 10; i ++) {
+        t1 = high_resolution_clock::now();
+        std::vector<std::string> resultsPar = stringSearchFM_OMP(vocabulary, target, threshold, nThreads);
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> time = t2 - t1;
+        sum += time.count();
+    }
 
-    duration<double, std::milli> time = t2 - t1;
-    return time.count();
+    return sum / 10;
 }
 
 std::vector<double> compareTimeStringSearch(const std::vector<std::string>& vocabulary, const std::string& target,
@@ -211,7 +279,7 @@ void testsEditDistance() {
     std::ofstream test1File;
     test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1ED.csv", std::ios::out);
     if (test1File.is_open()) {
-        std::vector<std::string> vocabulary1 = readVocabulary("5000-words.txt");
+        std::vector<std::string> vocabulary1 = readVocabularyTXT("5000-words.txt");
         std::cout << "5000 words, target = bout, threshold = 2, nThreads = 2" << std::endl;
         std::vector<double> results1 = compareTimeStringSearch(vocabulary1, "bout", 2, 2);
         test1File << 1;
@@ -260,7 +328,21 @@ void testsEditDistance() {
     std::ofstream test2File;
     test2File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test2ED.csv", std::ios::out);
     if (test2File.is_open()) {
-
+        //vocabulary con parole più lunghe, e target più lungo
+        std::vector<std::string> vocabularyL = readVocabularyCSV("30000-words.csv");
+        std::string target = "ethnographic";
+        double result1 = testStringSearchTime(vocabularyL, target, 2);
+        double result1OMP = testStringSearchOMPTime(vocabularyL, target, 2, 10);
+        test2File << 1 << result1 << "," << result1OMP << "\n";
+        double result2 = testStringSearchTime(vocabularyL, target, 1);
+        double result2OMP = testStringSearchOMPTime(vocabularyL, target, 1, 10);
+        test2File << 2 << result2 << "," << result2OMP << "\n";
+        double result3 = testStringSearchTime(vocabularyL, target, 2);
+        double result3OMP = testStringSearchOMPTime(vocabularyL, target, 2, 100);
+        test2File << 3 << result3 << "," << result3OMP << "\n";
+        double result4 = testStringSearchTime(vocabularyL, target, 2);
+        double result4OMP = testStringSearchOMPTime(vocabularyL, target, 2, 1000);
+        test2File << 4 << result4 << "," << result4OMP << "\n";
         test2File.close();
     }
     else {

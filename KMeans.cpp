@@ -124,7 +124,7 @@ void KMeans::run(std::vector<Point> algPoints) {
     }
     //write cluster centers to file
     std::ofstream outfile;
-    outfile.open(output_dir + "/" + std::to_string(K) + "Means-clusters.csv");
+    outfile.open(output_dir + "/" + std::to_string(K) + "Means-clusters.csv", std::ios::out);
     if (outfile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {

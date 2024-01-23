@@ -15,3 +15,9 @@
 868	1556	7274727045836384	ParallelProgramming.exe	9d478acd334abd9b
 3	868	7274727873478966	CMakeFiles/ParallelProgramming.dir/main.cpp.obj	7a2dd420b59a58f9
 869	1558	7274727880314599	ParallelProgramming.exe	9d478acd334abd9b
+178	6121	7277111934538339	CMakeFiles/ParallelProgramming.dir/Cluster.cpp.obj	bdf43c403f2df1d6
+173	6166	7277111934988027	CMakeFiles/ParallelProgramming.dir/KMeans.cpp.obj	9a6f2f6e99d825ad
+4	6196	7277111935257307	CMakeFiles/ParallelProgramming.dir/main.cpp.obj	7a2dd420b59a58f9
+6122	6686	7277111940184135	CMakeFiles/ParallelProgramming.dir/Point.cpp.obj	30cb9b215597b381
+6167	7248	7277111945809099	CMakeFiles/ParallelProgramming.dir/KMeansOMP.cpp.obj	e35eb1b1ac099689
+7248	9109	7277111964361892	ParallelProgramming.exe	9d478acd334abd9b
