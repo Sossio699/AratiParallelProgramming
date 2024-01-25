@@ -77,7 +77,7 @@ void KMeans::run(std::vector<Point> algPoints) {
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(algPoints[i]);
-            std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
+            //std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
             if (currentClusterId != nearestClusterId) {
                 algPoints[i].setClusterId(nearestClusterId);
                 changed = true;
@@ -128,9 +128,9 @@ void KMeans::run(std::vector<Point> algPoints) {
     if (outfile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {
-            outfile << clusters[i].getClusterId() << ",";
+            outfile << clusters[i].getClusterId();
             for (int j = 0; j < dimensions; j ++) {
-                outfile << clusters[i].getCentroidPos(j) << ","; //output to file
+                outfile << "," << clusters[i].getCentroidPos(j); //output to file
             }
             outfile << "\n";
         }

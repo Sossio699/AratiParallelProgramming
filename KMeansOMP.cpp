@@ -27,7 +27,7 @@ void KMeansOMP::clearClusters() {
 int KMeansOMP::getNearestClusterId(const Point& p) {
     double sum, min_dist = DBL_MAX;
     int nearestClusterId;
-    #pragma omp parallel for default(none) private(sum) shared(p, min_dist, nearestClusterId) num_threads(K)
+    //#pragma omp parallel for default(none) private(sum) shared(p, min_dist, nearestClusterId) num_threads(K)
     for (int i = 0; i < K; i ++) {
         double dist;
         sum = 0.0;
@@ -35,17 +35,18 @@ int KMeansOMP::getNearestClusterId(const Point& p) {
             dist = fabs(clusters[i].getCentroidPos(0) - p.getVal(0));
         }
         else {
+            //#pragma omp parallel for default(none) firstprivate(i), shared(p) reduction(+: sum) num_threads(dimensions)
             for (int j = 0; j < dimensions; j ++) {
                 sum += pow(clusters[i].getCentroidPos(j) - p.getVal(j), 2.0);
             }
             dist = sqrt(sum);
         }
         if (dist < min_dist) {
-            #pragma omp critical
-            {
+            //#pragma omp critical
+            //{
                 min_dist = dist;
                 nearestClusterId = clusters[i].getClusterId();
-            }
+            //}
         }
     }
     return nearestClusterId;
@@ -55,7 +56,6 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     nPoints = (int)algPoints.size();
     dimensions = algPoints[0].getDimensions();
     //initializing clusters
-    std::cout << "Initializing clusters" << std::endl;
     std::vector<int> usedPointsIds;
     bool init;
     std::random_device rd;
@@ -65,10 +65,8 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     num_threads(K)
     for (int i = 1; i <= K; i ++) {
         int index = distr(eng);
-        std::cout << index << std::endl;
         while (std::find(usedPointsIds.begin(), usedPointsIds.end(), index) != usedPointsIds.end()) {
             index = distr(eng);
-            std::cout << index << std::endl;
         }
         #pragma omp critical
         {
@@ -80,44 +78,40 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
         }
     }
     std::cout << "Clusters initialized = " << clusters.size() << std::endl << std::endl;
-    std::cout << clusters[0].getClusterId() << " " << clusters[1].getClusterId() << std::endl;
-    std::cout << "Running K-Means clustering.." << std::endl;
+    //std::cout << clusters[0].getClusterId() << " " << clusters[1].getClusterId() << std::endl;
+    std::cout << "Running K-Means OMP clustering.." << std::endl;
     int epoch = 1;
     bool run = true;
     while(run) {
         std::cout << "Epoch " << epoch << " / " << epochs << std::endl;
         bool changed = false;
         //add all points to their nearest cluster
-        std::cout << "Adding all points to their nearest cluster" << std::endl;
-        #pragma omp parallel for default(none) shared(algPoints, std::cout) reduction(||:changed) num_threads(threads)
+        #pragma omp parallel for default(none) shared(algPoints) reduction(||:changed) num_threads(threads)
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(algPoints[i]);
-            std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
             if (currentClusterId != nearestClusterId) {
+                changed = true;
                 #pragma omp critical
                 {
                     algPoints[i].setClusterId(nearestClusterId);
-                    changed = true;
                 }
             }
         }
         //clear all existing clusters
-        std::cout << "Clearing all existing clusters" << std::endl;
         clearClusters();
         //reassign points to their new clusters
-        std::cout << "Reassigning points to their new clusters" << std::endl;
-        for (int i = 0; i < nPoints; i ++) {
+        for (int i = 0; i < nPoints; i++) {
             //cluster index is ID-1
             clusters[algPoints[i].getClusterId() - 1].addPoint(algPoints[i]);
         }
         //recalculating the center of each cluster
-        std::cout << "Recalculating the center of each cluster" << std::endl;
-        for (int i = 0; i < K; i ++) {
+        for (int i = 0; i < K; i++) {
             int clusterSize = clusters[i].getClusterSize();
-            for (int j = 0; j < dimensions; j ++) {
+            #pragma omp parallel for default(none) firstprivate(i) shared(clusterSize, threads) num_threads(threads)
+            for (int j = 0; j < dimensions; j++) {
                 double sum = 0.0;
-                #pragma omp parallel for default(none) firstprivate(i, j) shared(clusterSize) reduction(+: sum) \
+                #pragma omp parallel for default(none) firstprivate(i, j) shared(clusterSize, threads) reduction(+: sum) \
                 num_threads(threads)
                 for (int p = 0; p < clusterSize; p++) {
                     sum += clusters[i].getPoint(p).getVal(j);
@@ -152,9 +146,9 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     if (outFile.is_open()) {
         std::cout << "Writing cluster coordinates" << std::endl;
         for (int i = 0; i < K; i ++) {
-            outFile << clusters[i].getClusterId() << ",";
+            outFile << clusters[i].getClusterId();
             for (int j = 0; j < dimensions; j ++) {
-                outFile << clusters[i].getCentroidPos(j) << ","; //output to file
+                outFile << "," << clusters[i].getCentroidPos(j); //output to file
             }
             outFile << "\n";
         }

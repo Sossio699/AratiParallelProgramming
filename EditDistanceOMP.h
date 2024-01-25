@@ -1,5 +1,5 @@
 //
-// Created by Giulia on 16/01/2024.
+// Created by Niccolò Arati on 08/01/2024.
 //
 
 #ifndef PARALLELPROGRAMMING_EDITDISTANCEOMP_H

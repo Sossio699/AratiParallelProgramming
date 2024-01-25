@@ -1,5 +1,5 @@
 //
-// Created by Giulia on 16/01/2024.
+// Created by Niccolò Arati on 08/01/2024.
 //
 
 #include "EditDistanceOMP.h"
@@ -24,7 +24,7 @@ int levenshteinDistFM_OMP(const std::string& word1, const std::string& word2, in
         distMatrix[0][j] = j;
     }
     //matrix filling
-    #pragma omp parallel for default (none) shared(length1, length2, distMatrix) firstprivate(word1, word2) \
+    #pragma omp parallel for default (none) collapse(2) shared(length1, length2, distMatrix) firstprivate(word1, word2) \
     num_threads(length1)
     for (int i = 1; i <= length1; i ++) {
         for (int j = 1; j <= length2; j ++) {

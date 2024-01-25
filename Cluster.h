@@ -10,7 +10,7 @@
 
 class Cluster {
 public:
-    Cluster(int clusterId, Point centroid);
+    Cluster(int clusterId, const Point& centroid);
 
     int getClusterId() const;
     void setClusterId(int id);

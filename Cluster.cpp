@@ -4,7 +4,7 @@
 
 #include "Cluster.h"
 
-Cluster::Cluster(int clusterId, Point centroid) {
+Cluster::Cluster(int clusterId, const Point& centroid) {
     this->clusterId = clusterId;
     for (int i = 0; i < centroid.getDimensions(); i ++) {
         this->centroid.push_back(centroid.getVal(i));

@@ -11,7 +11,7 @@
 
 class Point {
 public:
-    Point(int id, std::string line, bool csv = false);
+    Point(int id, const std::string& line, bool csv = false);
 
     Point (Point const &p);
 
@@ -28,8 +28,8 @@ private:
     int dimensions;
     std::vector<double> values;
 
-    std::vector<double> linetoVecTXT(std::string &line);
-    std::vector<double> linetoVecCSV(std::string &line);
+    std::vector<double> linetoVecTXT(const std::string& line);
+    std::vector<double> linetoVecCSV(const std::string& line);
 };
 
 

@@ -4,7 +4,7 @@
 
 #include "Point.h"
 
-Point::Point(int id, std::string line, bool csv) {
+Point::Point(int id, const std::string& line, bool csv) {
     pointId = id;
     if (csv) {
         values = linetoVecCSV(line);
@@ -53,7 +53,7 @@ double Point::getVal(int pos) const {
     return values[pos];
 }
 
-std::vector<double> Point::linetoVecTXT(std::string &line) {
+std::vector<double> Point::linetoVecTXT(const std::string &line) {
     std::vector<double> values;
     std::string tmp = "";
     for (int i = 0; i < (int)line.length(); i ++) {
@@ -71,12 +71,14 @@ std::vector<double> Point::linetoVecTXT(std::string &line) {
     return values;
 }
 
-std::vector<double> Point::linetoVecCSV(std::string &line) {
+std::vector<double> Point::linetoVecCSV(const std::string &line) {
     std::vector<double> values;
     std::string coord;
     std::stringstream s(line);
     while(getline(s, coord, ',')) {
-        values.push_back(std::stod(coord));
+        if ((48 <= int(coord[0]) && int(coord[0]) <= 57 || coord[0] == '-') && (std::stoi(coord) != pointId))  {
+            values.push_back(std::stod(coord));
+        }
     }
     return values;
 }
