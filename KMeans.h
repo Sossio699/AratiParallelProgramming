@@ -13,7 +13,7 @@ class KMeans {
 public:
     KMeans(int K, int epochs, const std::string& output_dir);
 
-    void run(std::vector<Point> allPoints);
+    void run(std::vector<Point> allPoints, int seed);
 
 private:
     int K, epochs, dimensions, nPoints;

@@ -52,17 +52,16 @@ int KMeansOMP::getNearestClusterId(const Point& p) {
     return nearestClusterId;
 }
 
-void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
+void KMeansOMP::run(std::vector<Point> algPoints, int seed, int threads) {
     nPoints = (int)algPoints.size();
     dimensions = algPoints[0].getDimensions();
     //initializing clusters
     std::vector<int> usedPointsIds;
-    bool init;
     std::random_device rd;
     std::default_random_engine eng(rd());
+    eng.seed(seed);
     std::uniform_int_distribution distr(0, nPoints);
-    #pragma omp parallel for default(none) private(init) shared(algPoints, usedPointsIds, distr, eng, std::cout) \
-    num_threads(K)
+    #pragma omp parallel for default(none) shared(algPoints, usedPointsIds, distr, eng, std::cout) num_threads(threads)
     for (int i = 1; i <= K; i ++) {
         int index = distr(eng);
         while (std::find(usedPointsIds.begin(), usedPointsIds.end(), index) != usedPointsIds.end()) {
@@ -84,14 +83,15 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
     bool run = true;
     while(run) {
         std::cout << "Epoch " << epoch << " / " << epochs << std::endl;
-        bool changed = false;
+        int changed = 0;
         //add all points to their nearest cluster
-        #pragma omp parallel for default(none) shared(algPoints) reduction(||:changed) num_threads(threads)
+        #pragma omp parallel for default(none) shared(algPoints, changed) num_threads(threads)
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
             int nearestClusterId = getNearestClusterId(algPoints[i]);
             if (currentClusterId != nearestClusterId) {
-                changed = true;
+                #pragma omp atomic
+                changed ++;
                 #pragma omp critical
                 {
                     algPoints[i].setClusterId(nearestClusterId);
@@ -121,7 +121,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int threads) {
                 }
             }
         }
-        if (!changed || epoch >= epochs) {
+        if ((float)changed / (float)nPoints <= 0.001 || epoch >= epochs) {
             std::cout << "Clustering completed in epoch : " << epoch << std::endl << std::endl;
             run = false;
         }

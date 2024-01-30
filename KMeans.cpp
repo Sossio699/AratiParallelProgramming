@@ -3,12 +3,12 @@
 //
 
 #include "KMeans.h"
-#include <cstdlib>
 #include <cfloat>
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <random>
 
 KMeans::KMeans(int K, int epochs, const std::string& output_dir) {
     this->K = K;
@@ -47,24 +47,24 @@ int KMeans::getNearestClusterId(const Point& p) {
     return nearestClusterId;
 }
 
-void KMeans::run(std::vector<Point> algPoints) {
+void KMeans::run(std::vector<Point> algPoints, int seed) {
     nPoints = (int)algPoints.size();
     dimensions = algPoints[0].getDimensions();
     //initializing clusters
     std::vector<int> usedPointsIds;
-    bool init;
+    std::random_device rd;
+    std::default_random_engine eng(rd());
+    eng.seed(seed);
+    std::uniform_int_distribution distr(0, nPoints);
     for (int i = 1; i <= K; i ++) {
-        init = false;
-        while(!init) {
-            int index = rand() % nPoints;
-            if (std::find(usedPointsIds.begin(), usedPointsIds.end(), index) == usedPointsIds.end()) {
-                usedPointsIds.push_back(index);
-                algPoints[index].setClusterId(i);
-                Cluster cluster(i, algPoints[index]);
-                clusters.push_back(cluster);
-                init = true;
-            }
+        int index = distr(eng);
+        while(std::find(usedPointsIds.begin(), usedPointsIds.end(), index) != usedPointsIds.end()) {
+            index = distr(eng);
         }
+        usedPointsIds.push_back(index);
+        algPoints[index].setClusterId(i);
+        Cluster cluster(i, algPoints[index]);
+        clusters.push_back(cluster);
     }
     std::cout << "Clusters initialized = " << clusters.size() << std::endl << std::endl;
     std::cout << "Running K-Means clustering.." << std::endl;
@@ -72,7 +72,7 @@ void KMeans::run(std::vector<Point> algPoints) {
     bool run = true;
     while(run) {
         std::cout << "Epoch " << epoch << " / " << epochs << std::endl;
-        bool changed = false;
+        int changed = 0;
         //add all points to their nearest cluster
         for (int i = 0; i < nPoints; i ++) {
             int currentClusterId = algPoints[i].getClusterId();
@@ -80,7 +80,7 @@ void KMeans::run(std::vector<Point> algPoints) {
             //std::cout << "Current: " << currentClusterId << ", nearest: " << nearestClusterId << std::endl;
             if (currentClusterId != nearestClusterId) {
                 algPoints[i].setClusterId(nearestClusterId);
-                changed = true;
+                changed ++;
             }
         }
         //clear all existing clusters
@@ -103,7 +103,7 @@ void KMeans::run(std::vector<Point> algPoints) {
                 }
             }
         }
-        if (!changed || epoch >= epochs) {
+        if ((float)changed / (float)nPoints <= 0.001 || epoch >= epochs) {
             std::cout << "Clustering completed in epoch : " << epoch << std::endl << std::endl;
             run = false;
         }
