@@ -4,9 +4,21 @@ import queue
 
 import DataLoader
 
+
+def worker_funct(dataset, index_queue, output_queue):
+    while True:
+        try:
+            index = index_queue.get(timeout = 0)
+        except queue.Empty:
+            continue
+        if index is None:
+            break
+        output_queue.put((index, dataset[index]))
+
+
 class DataLoaderPar(DataLoader.DataLoader):
-    def __init__(self, dataset, collate_fn, batch_size=64, num_workers=1, prefetch_batches=2):
-        super().__init__(dataset, collate_fn, batch_size)
+    def __init__(self, dataset, batch_size = 64, shuffle = False, num_workers = 1, prefetch_batches = 2):
+        super().__init__(dataset, batch_size, shuffle)
 
         self.num_workers = num_workers
         self.prefetch_batches = prefetch_batches
@@ -19,7 +31,7 @@ class DataLoaderPar(DataLoader.DataLoader):
 
         for _ in range(num_workers):
             index_queue = multiprocessing.Queue()
-            worker = multiprocessing.Process(target = DataLoader.worker_fn, args = (self.dataset, index_queue, self.output_queue))
+            worker = multiprocessing.Process(target = worker_funct, args = (self.dataset, index_queue, self.output_queue))
             worker.daemon = True
             worker.start()
             self.workers.append(worker)
@@ -28,8 +40,11 @@ class DataLoaderPar(DataLoader.DataLoader):
         self.prefetch()
 
     def prefetch(self):
-        while (self.prefetch_index < len(self.dataset) and self.prefetch_index < self.index + 2 * self.num_workers * self.batch_size) :
-            self.index_queues[next(self.worker_cycle)].put(self.prefetch_index)
+        while (self.prefetch_index < len(self.dataset) and
+               self.prefetch_index < self.index + self.prefetch_batches * self.num_workers * self.batch_size) :
+            # if the prefetch_index hasn't reached the end of the dataset &
+            # it is not 2 batches ahead, add indexes to the index queues
+            self.index_queues[next(self.worker_cycle)].put(self.prefetch_index) #cycles through workers
             self.prefetch_index += 1
 
     def get(self):
@@ -51,6 +66,9 @@ class DataLoaderPar(DataLoader.DataLoader):
 
         self.index += 1
         return item
+
+    def __next__(self):
+        super().__next__()
 
     def __iter__(self):
         self.index = 0
