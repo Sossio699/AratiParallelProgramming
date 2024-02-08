@@ -3,7 +3,6 @@
 //
 
 #include "EditDistance.h"
-#include <cassert>
 
 int levenshteinDistFM(const std::string& word1, const std::string& word2) {
     int length1 = (int)word1.length();
@@ -83,35 +82,30 @@ int levenshteinDistRec(const std::string& word1, const std::string& word2, int m
                         levenshteinDistRec(word1, word2, m - 1, n - 1)); //substitution cost
 }
 
-std::vector<std::string> stringSearchFM(const std::vector<std::string>& vocabulary,
-                                        const std::string& target, int threshold) {
-    std::vector<std::string> results;
+std::vector<int> stringSearchFM(const std::vector<std::string>& vocabulary, const std::string& target) {
+    std::vector<int> results;
+    results.reserve((int)vocabulary.size());
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
-        if (levenshteinDistFM(vocabulary[i], target) <= threshold) {
-            results.push_back(vocabulary[i]);
-        }
+        results.push_back(levenshteinDistFM(vocabulary[i], target));
     }
     return results;
 }
 
-std::vector<std::string> stringSearchMR(const std::vector<std::string>& vocabulary,
-                                        const std::string& target, int threshold) {
-    std::vector<std::string> results;
+std::vector<int> stringSearchMR(const std::vector<std::string>& vocabulary, const std::string& target) {
+    std::vector<int> results;
+    results.reserve((int)vocabulary.size());
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
-        if (levenshteinDistMR(vocabulary[i], target) <= threshold) {
-            results.push_back(vocabulary[i]);
-        }
+        results.push_back(levenshteinDistMR(vocabulary[i], target));
     }
     return results;
 }
 
-std::vector<std::string> stringSearchRec(const std::vector<std::string>& vocabulary,
-                                         const std::string& target, int threshold) {
-    std::vector<std::string> results;
+std::vector<int> stringSearchRec(const std::vector<std::string>& vocabulary, const std::string& target) {
+    std::vector<int> results;
+    results.reserve((int)vocabulary.size());
     for (int i = 0; i < (int)vocabulary.size(); i ++) {
-        if (levenshteinDistMR(vocabulary[i], target) <= threshold) {
-            results.push_back(vocabulary[i]);
-        }
+        results.push_back(levenshteinDistRec(vocabulary[i], target, (int)vocabulary[i].size(),
+                                             (int)target.size()));
     }
     return results;
 }

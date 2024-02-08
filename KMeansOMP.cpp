@@ -127,35 +127,5 @@ void KMeansOMP::run(std::vector<Point> algPoints, int seed, int threads) {
         }
         epoch++;
     }
-    //writing results
-    std::ofstream pointsFile;
-    pointsFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-points.csv", std::ios::out);
-    if (pointsFile.is_open()) {
-        std::cout << "Writing assigned cluster for each point" << std::endl;
-        for (int i = 0; i < nPoints; i++) {
-            pointsFile << algPoints[i].getId() << "," << algPoints[i].getClusterId() << "\n";
-        }
-        pointsFile.close();
-    }
-    else {
-        std::cout << "Error: unable to write point results" << std::endl;
-    }
-    //write cluster centers to file
-    std::ofstream outFile;
-    outFile.open(output_dir + "/" + std::to_string(K) + "MeansOMP-clusters.csv", std::ios::out);
-    if (outFile.is_open()) {
-        std::cout << "Writing cluster coordinates" << std::endl;
-        for (int i = 0; i < K; i ++) {
-            outFile << clusters[i].getClusterId();
-            for (int j = 0; j < dimensions; j ++) {
-                outFile << "," << clusters[i].getCentroidPos(j); //output to file
-            }
-            outFile << "\n";
-        }
-        outFile.close();
-    }
-    else {
-        std::cout << "Error: unable to write cluster coordinates" << std::endl;
-    }
-    std::cout << "END" << std::endl;
+
 }

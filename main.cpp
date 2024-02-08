@@ -546,63 +546,11 @@ void testEditDistance() {
 }
 
 
-void test() {
-    //Test3: 3 different targets varying nThreads, with 370000 words
-    std::ofstream test3File;
-    test3File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test3ED.csv", std::ios::out);
-    if (test3File.is_open()) {
-        std::vector<std::string> vocabulary = readVocabularyCSV("30000-words.csv");
-
-        std::string target1 = "bot";
-        double resultSeq1 = testStringSearchFMTime(vocabulary, target1, false);
-        std::vector<double> resultsPar1;
-        for (int i = 2; i < 17; i += 2) {
-            double resultPar = testStringSearchFM_OMPTime(vocabulary, target1, i, false);
-            resultsPar1.push_back(resultSeq1 / resultPar);
-        }
-
-        std::string target2 = "misqualify";
-        double resultSeq2 = testStringSearchFMTime(vocabulary, target2, false);
-        std::vector<double> resultsPar2;
-        for (int i = 2; i < 17; i += 2) {
-            double resultPar = testStringSearchFM_OMPTime(vocabulary, target2, i, false);
-            resultsPar2.push_back(resultSeq2 / resultPar);
-        }
-
-        std::string target3 = "rhinolaryngology";
-        double resultSeq3 = testStringSearchFMTime(vocabulary, target3, false);
-        std::vector<double> resultsPar3;
-        for (int i = 2; i < 17; i += 2) {
-            double resultPar = testStringSearchFM_OMPTime(vocabulary, target3, i, false);
-            resultsPar3.push_back(resultSeq3 / resultPar);
-        }
-
-        test3File << resultsPar1[0];
-        for (int i = 1; i < (int)resultsPar1.size(); i ++) {
-            test3File << "," << resultsPar1[i];
-        }
-        test3File << "\n" << resultsPar2[0];
-        for (int i = 1; i < (int)resultsPar2.size(); i ++) {
-            test3File << "," << resultsPar2[i];
-        }
-        test3File << "\n" << resultsPar3[0];
-        for (int i = 1; i < (int)resultsPar3.size(); i ++) {
-            test3File << "," << resultsPar3[i];
-        }
-        test3File << "\n";
-
-        test3File.close();
-    }
-    else {
-        std::cout << "Error: unable to open the file" << std::endl;
-    }
-}
-
 int main() {
 
-    //testKMeans();
+    testKMeans();
 
-    testEditDistance();
+    //testEditDistance();
 
     return 0;
 }

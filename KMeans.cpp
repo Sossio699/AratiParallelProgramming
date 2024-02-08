@@ -109,34 +109,5 @@ void KMeans::run(std::vector<Point> algPoints, int seed) {
         }
         epoch++;
     }
-    //writing results
-    std::ofstream pointsFile;
-    pointsFile.open(output_dir + "/" + std::to_string(K) + "Means-points.csv", std::ios::out);
-    if (pointsFile.is_open()) {
-        std::cout << "Writing assigned cluster for each point" << std::endl;
-        for (int i = 0; i < nPoints; i++) {
-            pointsFile << algPoints[i].getId() << "," << algPoints[i].getClusterId() << "\n";
-        }
-        pointsFile.close();
-    }
-    else {
-        std::cout << "Error: unable to write point results" << std::endl;
-    }
-    //write cluster centers to file
-    std::ofstream outfile;
-    outfile.open(output_dir + "/" + std::to_string(K) + "Means-clusters.csv", std::ios::out);
-    if (outfile.is_open()) {
-        std::cout << "Writing cluster coordinates" << std::endl;
-        for (int i = 0; i < K; i ++) {
-            outfile << clusters[i].getClusterId();
-            for (int j = 0; j < dimensions; j ++) {
-                outfile << "," << clusters[i].getCentroidPos(j); //output to file
-            }
-            outfile << "\n";
-        }
-        outfile.close();
-    }
-    else {
-        std::cout << "Error: unable to write cluster coordinates" << std::endl;
-    }
+
 }
