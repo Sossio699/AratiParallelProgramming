@@ -11,14 +11,13 @@
 
 class KMeans {
 public:
-    KMeans(int K, int epochs, const std::string& output_dir);
+    KMeans(int K, int epochs);
 
     void run(std::vector<Point> allPoints, int seed);
 
 private:
     int K, epochs, dimensions, nPoints;
     std::vector<Cluster> clusters;
-    std::string output_dir;
 
     void clearClusters();
     int getNearestClusterId(const Point& p);

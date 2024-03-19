@@ -10,10 +10,9 @@
 #include <algorithm>
 #include <random>
 
-KMeans::KMeans(int K, int epochs, const std::string& output_dir) {
+KMeans::KMeans(int K, int epochs) {
     this->K = K;
     this->epochs = epochs;
-    this->output_dir = output_dir;
     dimensions = 0;
     nPoints = 0;
 }
