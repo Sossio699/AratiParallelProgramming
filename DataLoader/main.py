@@ -1,180 +1,214 @@
 import time
 import sys
 import pandas
-import joblib
+import pathlib
+import albumentations
+import albumentations.augmentations.geometric.resize as resize
 
 import DataLoader
 import DataLoaderPar
+import Dataset
 
 
-def testDataLoaderW():
-    #dataset1 = pandas.read_csv("D:/Programmi/PyCharmProject/DataLoader/input/dataset1.csv")
-    dataset1 = list(range(200000))
+#test different number of workers and albumentations with fixed batch_size of 300
+def testDataLoaderWT():
+    image_paths = pathlib.Path("D:/Programmi/PyCharmProject/DataLoader/input/images").glob('**/**/*.jpg')
+    im_sorted = sorted([x for x in image_paths])
 
-    dataloader = DataLoader.DataLoader(dataset1, batch_size = 1000)
+    dataset = Dataset.Dataset(len(im_sorted), im_sorted)
+
+    n_workers = [1, 2, 4, 6, 8]
+
+
+    #first albumentations
+    transform1 = albumentations.Compose([
+        resize.Resize(height = 256, width = 256, p = 1),
+        albumentations.RandomCrop(width = 200, height = 200, p = 1)
+    ])
+
+    print("Sequential DataLoader, transform1")
+    dataloader = DataLoader.DataLoader(dataset, batch_size = 300)
     startSeq = time.time()
     for batch in dataloader:
-        time.sleep(0.2)
+        for image in batch:
+            transformed = transform1(image = image)['image']
     endSeq = time.time()
-    resultSeq = endSeq - startSeq
+    resultSeq1 = endSeq - startSeq
 
+    print("Parallel DataLoader, transform1, workers from 1 to 8")
     resultsPar1 = []
-    for i in range(1, 9, 1):
-        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset1, batch_size = 1000, num_workers = i)
+    for i in n_workers:
+        print("N_workers: ", i)
+        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset, batch_size = 300, num_workers = i)
         startPar = time.time()
         for batch in dataloaderPar:
-            time.sleep(0.2)
+            for image in batch:
+                transformed = transform1(image = image)['image']
         endPar = time.time()
         resultPar = endPar - startPar
-        resultsPar1.append(resultSeq / resultPar)
-
-    resultsJL1 = []
-    for i in range(1, 9, 1):
-        dataloader = DataLoader.DataLoader(dataset1, batch_size = 1000)
-        startJL = time.time()
-        joblib.Parallel(n_jobs = i, prefer = "threads")(joblib.delayed(time.sleep)(0.2) for batch in dataloader)
-        endJL = time.time()
-        resultJL = endJL - startJL
-        resultsJL1.append(resultSeq / resultJL)
+        print("SpeedUp: ", resultSeq1 / resultPar)
+        resultsPar1.append(resultSeq1 / resultPar)
 
 
-    #dataset2 = pandas.read_csv("D:/Programmi/PyCharmProject/DataLoader/input/dataset2.csv")
-    dataset2 = list(range(200000))
+    #second albumentations
+    transform2 = albumentations.Compose([
+        resize.Resize(height=256, width=256, p=1),
+        albumentations.HorizontalFlip(p=1),
+        albumentations.RandomCrop(width=200, height=200, p=1),
+        albumentations.RandomBrightnessContrast(p=1),
+        albumentations.VerticalFlip(p=1)
+    ])
 
-    dataloader2 = DataLoader.DataLoader(dataset2, batch_size = 1000)
+    print("Sequential DataLoader, transform2")
+    dataloader = DataLoader.DataLoader(dataset, batch_size = 300)
     startSeq = time.time()
-    for batch in dataloader2:
-        time.sleep(0.8)
+    for batch in dataloader:
+        for image in batch:
+            transformed = transform2(image = image)['image']
     endSeq = time.time()
     resultSeq2 = endSeq - startSeq
 
+    print("Parallel DataLoader, transform2, workers from 1 to 8")
     resultsPar2 = []
-    for i in range(1, 9, 1):
-        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset2, batch_size = 1000, num_workers = i)
+    for i in n_workers:
+        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset, batch_size = 300, num_workers = i)
         startPar = time.time()
         for batch in dataloaderPar:
-            time.sleep(0.8)
+            for image in batch:
+                transformed = transform2(image = image)['image']
         endPar = time.time()
         resultPar = endPar - startPar
+        print("SpeedUp: ", resultSeq2 / resultPar)
         resultsPar2.append(resultSeq2 / resultPar)
 
-    resultsJL2 = []
-    for i in range(1, 9, 1):
-        dataloader = DataLoader.DataLoader(dataset2, batch_size = 1000)
-        startJL = time.time()
-        joblib.Parallel(n_jobs = i, prefer = "threads")(joblib.delayed(time.sleep)(0.8) for batch in dataloader)
-        endJL = time.time()
-        resultJL = endJL - startJL
-        resultsJL2.append(resultSeq / resultJL)
 
+    #third albumentations
+    transform3 = albumentations.Compose([
+        resize.Resize(height=256, width=256, p=1),
+        albumentations.HorizontalFlip(p=1),
+        albumentations.RandomCrop(width=200, height=200, p=1),
+        albumentations.RandomBrightnessContrast(p=1),
+        albumentations.VerticalFlip(p=1),
+        resize.Resize(height=280, width=280, p=1),
+        albumentations.RandomCrop(width = 200, height=200, p=1)
+    ])
 
-    #dataset3 = pandas.read_csv("D:/Programmi/PyCharmProject/DataLoader/input/dataset3.csv")
-    dataset3 = list(range(200000))
-
-    dataloader3 = DataLoader.DataLoader(dataset3, batch_size = 1000)
+    print("Sequential DataLoader, transform3")
+    dataloader = DataLoader.DataLoader(dataset, batch_size = 300)
     startSeq = time.time()
-    for batch in dataloader3:
-        time.sleep(2.5)
+    for batch in dataloader:
+        for image in batch:
+            transformed = transform3(image = image)['image']
     endSeq = time.time()
     resultSeq3 = endSeq - startSeq
 
+    print("Parallel DataLoader, transform3, workers from 1 to 8")
     resultsPar3 = []
-    for i in range(1, 9, 1):
-        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset3, batch_size = 1000, num_workers = i)
+    for i in n_workers:
+        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset, batch_size = 300, num_workers = i)
         startPar = time.time()
         for batch in dataloaderPar:
-            time.sleep(2.5)
+            for image in batch:
+                transformed = transform3(image = image)['image']
         endPar = time.time()
         resultPar = endPar - startPar
+        print("SpeedUp: ", resultSeq3 / resultPar)
         resultsPar3.append(resultSeq3 / resultPar)
 
-    resultsJL3 = []
-    for i in range(1, 9, 1):
-        dataloader = DataLoader.DataLoader(dataset3, batch_size = 1000)
-        startJL = time.time()
-        joblib.Parallel(n_jobs = i, prefer = "threads")(joblib.delayed(time.sleep)(2.5) for batch in dataloader)
-        endJL = time.time()
-        resultJL = endJL - startJL
-        resultsJL3.append(resultSeq / resultJL)
 
+    #fourth albumentations
+    transform4 = albumentations.Compose([
+        resize.Resize(height=256, width=256, p=1),
+        albumentations.HorizontalFlip(p=1),
+        albumentations.RandomCrop(width=200, height=200, p=1),
+        albumentations.RandomBrightnessContrast(p=1),
+        albumentations.VerticalFlip(p=1),
+        resize.Resize(height=280, width=280, p=1),
+        albumentations.RandomCrop(width = 200, height=200, p=1),
+        albumentations.HorizontalFlip(p=1),
+        albumentations.RandomBrightnessContrast(p=1),
+        albumentations.VerticalFlip(p=1),
+        resize.Resize(height=280, width=280, p=1)
+    ])
 
-    #dataset4 = pandas.read_csv("D:/Programmi/PyCharmProject/input/dataset4.csv")
-    dataset4 = list(range(200000))
-
-    dataloader4 = DataLoader.DataLoader(dataset4, batch_size = 1000)
+    print("Sequential DataLoader, transform4")
+    dataloader = DataLoader.DataLoader(dataset, batch_size = 300)
     startSeq = time.time()
-    for batch in dataloader4:
-        time.sleep(4)
+    for batch in dataloader:
+        for image in batch:
+            transformed = transform4(image = image)['image']
     endSeq = time.time()
     resultSeq4 = endSeq - startSeq
 
+    print("Parallel DataLoader, transform4, workers from 1 to 8")
     resultsPar4 = []
-    for i in range(1, 9, 1):
-        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset4, batch_size = 1000, num_workers = i)
+    for i in n_workers:
+        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset, batch_size = 300, num_workers = i)
         startPar = time.time()
         for batch in dataloaderPar:
-            time.sleep(4)
+            for image in batch:
+                transformed = transform4(image = image)['image']
         endPar = time.time()
         resultPar = endPar - startPar
+        print("SpeedUp: ", resultSeq4 / resultPar)
         resultsPar4.append(resultSeq4 / resultPar)
 
-    resultsJL4 = []
-    for i in range(1, 9, 1):
-        dataloader = DataLoader.DataLoader(dataset4, batch_size = 1000)
-        startJL = time.time()
-        joblib.Parallel(n_jobs = i, prefer = "threads")(joblib.delayed(time.sleep)(4) for batch in dataloader)
-        endJL = time.time()
-        resultJL = endJL - startJL
-        resultsJL4.append(resultSeq / resultJL)
 
-
-    speedUps = pandas.DataFrame(data = [resultsPar1, resultsJL1, resultsPar2, resultsJL2,
-                                      resultsPar3, resultsJL3, resultsPar4, resultsJL4],
-                                columns = ["1 worker", "2 workers", "3 workers", "4 workers", "5 workers", "6 workers",
-                                           "7 workers", "8 workers"])
-    speedUps.index = ["SpeedUpPar0.2", "SpeedUpJL0.2", "SpeedUpPar0.8", "SpeedUpJL0.8", "SpeedUpPar2.5",
-                      "SpeedUpJL2.5", "SpeedUpPar4", "SpeedUpJL4"]
+    speedUps = pandas.DataFrame(data = [resultsPar1, resultsPar2, resultsPar3, resultsPar4],
+                                columns = ["1 worker", "2 workers", "4 workers", "6 workers", "8 workers"])
+    speedUps.index = ["SpeedUpPar1", "SpeedUpPar2", "SpeedUpPar3", "SpeedUpPar4"]
     speedUps.to_csv("D:/Programmi/PyCharmProject/DataLoader/results/test1DL.csv")
 
 
+#test different batch sizes with fixed albumentations and num_workers
 def testDataLoaderB():
-    sizes = [10, 100, 500, 1000, 5000, 10000]
+    sizes = [10, 50, 100, 300, 500, 1000]
     results = []
-    # dataset1 = pandas.read_csv("D:/Programmi/PyCharmProject/DataLoader/input/dataset1.csv")
-    dataset1 = list(range(200000))
+
+    image_paths = pathlib.Path("D:/Programmi/PyCharmProject/DataLoader/input/images").glob('**/**/*.jpg')
+    im_sorted = sorted([x for x in image_paths])
+
+    dataset = Dataset.Dataset(len(im_sorted), im_sorted)
+
+    transform = albumentations.Compose([
+        resize.Resize(height=256, width=256, p=1),
+        albumentations.HorizontalFlip(p=1),
+        albumentations.RandomCrop(width=200, height=200, p=1),
+        albumentations.RandomBrightnessContrast(p=1),
+        albumentations.VerticalFlip(p=1)
+    ])
 
     for size in sizes:
-        dataloader = DataLoader.DataLoader(dataset1, batch_size = size)
+        print("Sequential DataLoader, batch_size: ", size)
+        dataloader = DataLoader.DataLoader(dataset, batch_size = size)
         startSeq = time.time()
         for batch in dataloader:
-            time.sleep(0.8)
+            for image in batch:
+                transformed = transform(image = image)['image']
         endSeq = time.time()
         resultSeq = endSeq - startSeq
 
-        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset1, batch_size = size, num_workers = 2)
+        print("Parallel DataLoader, batch_size: ", size)
+        dataloaderPar = DataLoaderPar.DataLoaderPar(dataset, batch_size = size, num_workers = 2)
         startPar = time.time()
         for batch in dataloaderPar:
-            time.sleep(0.8)
+            for image in batch:
+                transformed = transform(image = image)['image']
         endPar = time.time()
         resultPar = endPar - startPar
 
-        dataloader = DataLoader.DataLoader(dataset1, batch_size = size)
-        startJL = time.time()
-        joblib.Parallel(n_jobs = 2, prefer = "threads")(joblib.delayed(time.sleep)(0.8) for batch in dataloader)
-        endJL = time.time()
-        resultJL = endJL
-
-        results.append([resultSeq / resultPar, resultSeq / resultJL])
+        print("SpeedUp: ", resultSeq / resultPar)
+        results.append([resultSeq / resultPar])
 
     speedUps = pandas.DataFrame(data = results,
-                                columns = ["SpeedUp Par", "SpeedUp JL"])
-    speedUps.index = ["bs = 10", "bs = 100", "bs = 500", "bs = 1000", "bs = 5000", "bs = 10000"]
+                                columns = ["SpeedUp Par"])
+    speedUps.index = ["bs = 10", "bs = 50", "bs = 100", "bs = 300", "bs = 500", "bs = 1000"]
     speedUps.to_csv("D:/Programmi/PyCharmProject/DataLoader/results/test2DL.csv")
 
 
 def main():
 
-    #testDataLoaderW()
+    testDataLoaderWT()
     testDataLoaderB()
 
     sys.exit(0)

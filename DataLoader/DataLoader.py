@@ -17,7 +17,7 @@ class DataLoader:
         if self.index >= len(self.dataset):
             raise StopIteration
         batch_size = min(len(self.dataset) - self.index, self.batch_size)
-        batch = np.array([self.get() for _ in range(batch_size)])
+        batch = tuple([self.get() for _ in range(batch_size)])
         if self.shuffle:
             random.shuffle(batch)
         return batch
