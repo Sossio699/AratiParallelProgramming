@@ -17,7 +17,8 @@ def worker_funct(dataset, index_queue, output_queue):
 
 
 class DataLoaderPar(DataLoader.DataLoader):
-    def __init__(self, dataset, batch_size = 64, shuffle = False, num_workers = 1, prefetch_batches = 2):
+    def __init__(self, dataset, batch_size = 64, shuffle = False,
+                 num_workers = 1, prefetch_batches = 2):
         super().__init__(dataset, batch_size, shuffle)
 
         self.num_workers = num_workers
@@ -31,7 +32,9 @@ class DataLoaderPar(DataLoader.DataLoader):
 
         for _ in range(num_workers):
             index_queue = multiprocessing.Queue()
-            worker = multiprocessing.Process(target = worker_funct, args = (self.dataset, index_queue, self.output_queue))
+            worker = multiprocessing.Process(target = worker_funct,
+                                             args = (self.dataset, index_queue,
+                                                     self.output_queue))
             worker.daemon = True
             worker.start()
             self.workers.append(worker)
