@@ -19,7 +19,7 @@ using std::chrono::milliseconds;
 std::vector<Point> readPointsCSV(const std::string& fileName, int stop = 1000) {
     std::vector<Point> points;
     std::string line;
-    std::ifstream input("C:/USers/Giulia/CLionProjects/ParallelProgramming/inputs/" + fileName, std::ios::in);
+    std::ifstream input("/data01/pc24nicara/ParallelProgramming/inputs/" + fileName, std::ios::in);
     if (input.is_open()) {
         int id = 0;
         while (std::getline(input, line)) {
@@ -66,7 +66,7 @@ double testKMeansOMPTime(int K, int epochs, const std::vector<Point>& points, in
 void testKMeans() {
     //test1: understanding number of points to use KMeans
     std::ofstream test1File;
-    test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1KM.csv", std::ios::out);
+    test1File.open("/data01/pc24nicara/ParallelProgramming/results/Test1KM.csv", std::ios::out);
     if (test1File.is_open()) {
         //3000 points 2D
         std::vector<Point> points1 = readPointsCSV("3000-2D.csv");
@@ -117,7 +117,7 @@ void testKMeans() {
 
     //test2: 500k points with 5D, changing nThreads and K
     std::ofstream test2File;
-    test2File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test2KM.csv", std::ios::out);
+    test2File.open("/data01/pc24nicara/ParallelProgramming/results/Test2KM.csv", std::ios::out);
     if (test2File.is_open()) {
         std::vector<Point> points = readPointsCSV("500000-5D.csv", 5);
         points.erase(points.begin());
@@ -165,7 +165,7 @@ void testKMeans() {
 
     //test3: 4mln points with fixed nThreads and varying K
     std::ofstream test3File;
-    test3File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test3KM.csv", std::ios::out);
+    test3File.open("/data01/pc24nicara/ParallelProgramming/results/Test3KM.csv", std::ios::out);
     if (test3File.is_open()) {
         std::vector<Point> points = readPointsCSV("4mln-3D.csv", 3);
         points.erase(points.begin());
@@ -312,6 +312,7 @@ double testStringSearchSD_OMP2Time(const std::string& word1, const std::string& 
 }
 
 
+//compare all algorithms
 std::vector<double> compareTimeStringSearch(const std::string& word1, const std::string& word2, int nThreads,
                                             bool repeat = true) {
     std::vector<double> timeResults;
@@ -352,12 +353,13 @@ std::vector<double> compareTimeStringSearch(const std::string& word1, const std:
     return speedUps;
 }
 
+//compare Full Matrix and Skew Diagonal Parallel
 double compareTimeStringSearchSD(const std::string& word1, const std::string& word2, int nThreads,
                                               bool repeat = true) {
     std::vector<double> timeResults;
 
 
-    double resultSeqSD = testStringSearchSDTime(word1, word2, repeat);
+    double resultSeqSD = testStringSearchFMTime(word1, word2, repeat);
     std::cout << "Skew Diagonal sequential, average time(ms): " << resultSeqSD << std::endl;
     timeResults.push_back(resultSeqSD);
 
@@ -374,11 +376,11 @@ double compareTimeStringSearchSD(const std::string& word1, const std::string& wo
 void testEditDistance() {
     //Test1: length 5000 vs 15000 vs 25000, better approaches
     std::ofstream test1File;
-    test1File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test1ED.csv", std::ios::out);
+    test1File.open("/data01/pc24nicara/ParallelProgramming/results/Test1ED.csv", std::ios::out);
     if (test1File.is_open()) {
         std::string word1 = random_string(5000, 111);
         std::string word2 = random_string(5000, 11);
-        std::vector<double> results = compareTimeStringSearch(word1, word2, 4);
+        std::vector<double> results = compareTimeStringSearch(word1, word2, 16);
 
         test1File << results[0];
         for (int i = 1; i < (int)results.size(); i ++) {
@@ -395,7 +397,7 @@ void testEditDistance() {
 
         std::string word3 = random_string(15000, 111);
         std::string word4 = random_string(15000, 11);
-        std::vector<double> results2 = compareTimeStringSearch(word3, word4, 4);
+        std::vector<double> results2 = compareTimeStringSearch(word3, word4, 16);
 
         test1File << results2[0];
         for (int i = 1; i < (int)results2.size(); i ++) {
@@ -412,7 +414,7 @@ void testEditDistance() {
 
         std::string word5 = random_string(28000, 111);
         std::string word6 = random_string(28000, 11);
-        std::vector<double> results3 = compareTimeStringSearch(word5, word6, 4);
+        std::vector<double> results3 = compareTimeStringSearch(word5, word6, 16);
 
         test1File << results3[0];
         for (int i = 1; i < (int)results3.size(); i ++) {
@@ -436,38 +438,38 @@ void testEditDistance() {
 
     //Test2: Skew Diagonal Sequential vs Parallel varying length
     std::ofstream test2File;
-    test2File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test2ED.csv", std::ios::out);
+    test2File.open("/data01/pc24nicara/ParallelProgramming/results/Test2ED.csv", std::ios::out);
     if (test2File.is_open()) {
         std::vector<double> speedUps;
 
         std::string word1 = random_string(200, 111);
         std::string word2 = random_string(200, 11);
-        double speedUp1 = compareTimeStringSearchSD(word1, word2, 4);
+        double speedUp1 = compareTimeStringSearchSD(word1, word2, 8);
         speedUps.push_back(speedUp1);
 
         std::string word3 = random_string(3000, 111);
         std::string word4 = random_string(3000, 11);
-        double speedUp2 = compareTimeStringSearchSD(word3, word4, 4);
+        double speedUp2 = compareTimeStringSearchSD(word3, word4, 8);
         speedUps.push_back(speedUp2);
 
         std::string word5 = random_string(12000, 111);
         std::string word6 = random_string(12000, 11);
-        double speedUp3 = compareTimeStringSearchSD(word5, word6, 4);
+        double speedUp3 = compareTimeStringSearchSD(word5, word6, 8);
         speedUps.push_back(speedUp3);
 
         std::string word7 = random_string(20000, 111);
         std::string word8 = random_string(20000, 11);
-        double speedUp4 = compareTimeStringSearchSD(word7, word8, 4);
+        double speedUp4 = compareTimeStringSearchSD(word7, word8, 8);
         speedUps.push_back(speedUp4);
 
         std::string word9 = random_string(32000, 111);
         std::string word10 = random_string(32000, 11);
-        double speedUp5 = compareTimeStringSearchSD(word9, word10, 4);
+        double speedUp5 = compareTimeStringSearchSD(word9, word10, 8);
         speedUps.push_back(speedUp5);
 
         std::string word11 = random_string(45000, 111);
         std::string word12 = random_string(45000, 11);
-        double speedUp6 = compareTimeStringSearchSD(word11, word12, 4);
+        double speedUp6 = compareTimeStringSearchSD(word11, word12, 8);
         speedUps.push_back(speedUp6);
 
         test2File << speedUps[0];
@@ -493,7 +495,7 @@ void testEditDistance() {
 
     //Test3: Skew Diagonal with length 20000, varying nThreads
     std::ofstream test3File;
-    test3File.open("C:/Users/Giulia/CLionProjects/ParallelProgramming/results/Test3ED.csv", std::ios::out);
+    test3File.open("/data01/pc24nicara/ParallelProgramming/results/Test3ED.csv", std::ios::out);
     if (test3File.is_open()) {
         std::vector<double> speedUps;
 

@@ -4,7 +4,6 @@
 
 #include "KMeans.h"
 #include <cfloat>
-#include <fstream>
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -54,7 +53,7 @@ void KMeans::run(std::vector<Point> algPoints, int seed) {
     std::random_device rd;
     std::default_random_engine eng(rd());
     eng.seed(seed);
-    std::uniform_int_distribution distr(0, nPoints);
+    std::uniform_int_distribution<int> distr(0, nPoints);
     for (int i = 1; i <= K; i ++) {
         int index = distr(eng);
         while(std::find(usedPointsIds.begin(), usedPointsIds.end(), index) != usedPointsIds.end()) {

@@ -2,7 +2,6 @@
 // Created by Niccolò Arati on 08/01/2024.
 //
 
-#include <cmath>
 #include <vector>
 #include "EditDistanceOMP.h"
 
@@ -30,7 +29,8 @@ int levenshteinDistSD_OMP(const std::string& word1, const std::string& word2, in
     //begin algorithm
     int dMIN = 1 - M;
     int dMAX = N - 1;
-    #pragma omp parallel default(none) firstprivate(dMIN, dMAX, M, N) shared(distMatrix, word1, word2) num_threads(threads)
+    #pragma omp parallel default(none) firstprivate(dMIN, dMAX, M, N) \
+    shared(distMatrix, word1, word2) num_threads(threads)
     {
         for (int d = dMIN; d <= dMAX; d++) {
             int iMIN = std::max(d, 1);
@@ -40,7 +40,8 @@ int levenshteinDistSD_OMP(const std::string& word1, const std::string& word2, in
                 int k = d < 0 ? 1 : -1;
                 int j = M + d - i + k;
                 if (word1[i - 1] != word2[j - 1]) {
-                    distMatrix[i * N + j] = std::min(std::min(distMatrix[(i - 1) * M + j], distMatrix[i * M + j - 1]),
+                    distMatrix[i * N + j] = std::min(std::min(distMatrix[(i - 1) * M + j],
+                                                              distMatrix[i * M + j - 1]),
                                                      distMatrix[(i - 1) * M + j - 1]) + 1;
                 } else {
                     distMatrix[i * N + j] = distMatrix[(i - 1) * N + j - 1];
@@ -81,12 +82,14 @@ int levenshteinDistSD_OMP2(const std::string& word1, const std::string& word2, i
     for (int d = dMIN; d <= dMAX; d++) {
         int iMIN = std::max(d, 1);
         int iMAX = std::min(M + d, N - 1);
-        #pragma omp parallel for default(none) firstprivate(iMIN, iMAX, d, M, N) shared(distMatrix, word1, word2) num_threads(threads)
+        #pragma omp parallel for default(none) firstprivate(iMIN, iMAX, d, M, N) \
+        shared(distMatrix, word1, word2) num_threads(threads)
         for (int i = iMIN; i <= iMAX; i++) {
             int k = d < 0 ? 1 : -1;
             int j = M + d - i + k;
             if (word1[i - 1] != word2[j - 1]) {
-                distMatrix[i * N + j] = std::min(std::min(distMatrix[(i - 1) * M + j], distMatrix[i * M + j - 1]),
+                distMatrix[i * N + j] = std::min(std::min(distMatrix[(i - 1) * M + j],
+                                                          distMatrix[i * M + j - 1]),
                                                  distMatrix[(i - 1) * M + j - 1]) + 1;
             } else {
                 distMatrix[i * N + j] = distMatrix[(i - 1) * N + j - 1];

@@ -54,7 +54,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int seed, int threads) {
     std::random_device rd;
     std::default_random_engine eng(rd());
     eng.seed(seed);
-    std::uniform_int_distribution distr(0, nPoints);
+    std::uniform_int_distribution<int> distr(0, nPoints);
     for (int i = 1; i <= K; i ++) {
         int index;
         do {
@@ -83,10 +83,7 @@ void KMeansOMP::run(std::vector<Point> algPoints, int seed, int threads) {
             if (currentClusterId != nearestClusterId) {
                 #pragma omp atomic
                 changed ++;
-                #pragma omp critical
-                {
-                    algPoints[i].setClusterId(nearestClusterId);
-                }
+                algPoints[i].setClusterId(nearestClusterId);
             }
         }
 
@@ -104,8 +101,8 @@ void KMeansOMP::run(std::vector<Point> algPoints, int seed, int threads) {
             int clusterSize = clusters[i].getClusterSize();
             for (int j = 0; j < dimensions; j++) {
                 double sum = 0.0;
-                #pragma omp parallel for default(none) firstprivate(i, j) shared(clusterSize) reduction(+: sum) \
-                num_threads(threads)
+                #pragma omp parallel for default(none) firstprivate(i, j) shared(clusterSize) \
+                reduction(+: sum) num_threads(threads)
                 for (int p = 0; p < clusterSize; p++) {
                     sum += clusters[i].getPoint(p).getVal(j);
                 }
