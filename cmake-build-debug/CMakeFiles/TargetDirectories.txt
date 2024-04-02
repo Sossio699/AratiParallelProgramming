@@ -1,3 +1,0 @@
-C:/Users/Giulia/CLionProjects/ParallelProgramming/cmake-build-debug/CMakeFiles/ParallelProgramming.dir
-C:/Users/Giulia/CLionProjects/ParallelProgramming/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/Giulia/CLionProjects/ParallelProgramming/cmake-build-debug/CMakeFiles/rebuild_cache.dir
