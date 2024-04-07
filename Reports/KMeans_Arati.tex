@@ -219,15 +219,13 @@ In generale il principale parametro tenuto in considerazione per gli esperimenti
 
 Nella \cref{eq:comp} viene indicato che la complessità dipende dal numero di punti (n), dal numero di cluster specificati (K), dal numero di iterazioni (I), e dal numero di dimensioni associate ai singoli punti (d).\\
 Terremo quindi conto di tutti questi parametri nei test, tranne il numero di iterazioni per il quale sono state fatte delle scelte in precedenza che verranno mantenute tali (\cref{sec:intro}, nella parte relativa alla convergenza).\\
-I risultati vengono salvati in appositi file csv contenuti nella cartella results, ed eventuali grafici vengono generati tramite del codice python (non reso disponibile).\\
-I risultati dei test vengono salvati in appositi file csv contenuti nella cartella \textbf{results}.\\
+I risultati dei test vengono salvati in appositi file csv contenuti nella cartella results, ed eventuali grafici vengono generati tramite del codice python (non reso disponibile).\\
 Di seguito vengono presentati i test svolti per l'algoritmo KMeans.
 
 \subsection{Test1: numero di punti minimo}
 \label{sec:t1}
 Con questo primo breve test si voleva intuire quale potesse essere il numero minimo di punti per il quale si rivelasse effettivamente utile la parallelizzazione. Si è scelto il numero di punti come parametro anche perchè la parte parallela del codice si riferisce a cicli for che iterano appunto sui punti da clusterizzare.\\
 Ci aspetteremmo che, all'aumentare del numero di punti (e delle loro dimensioni) lo speedup tra versione sequenziale e parallela risulti maggiore a parità di numero di threads utilizzati nella parallelizzazione.\\
-Scrivere risultati attesi, e che aumentando il numero di punti ci si aspetta che lo speedup sia maggiore a parità di nThreads.
 
 \begin{table}[h]
 \centering

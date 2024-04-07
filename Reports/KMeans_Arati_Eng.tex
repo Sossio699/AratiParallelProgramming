@@ -1,0 +1,323 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+\usepackage{url}
+
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+%\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+
+\cvprfinalcopy % *** Uncomment this line for the final submission
+
+\def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+\newcommand{\e} {\`e }
+\newcommand{\E} {\`E }
+\newcommand{\aee} {\'{e} }
+\newcommand{\aea} {\`{a} }
+\newcommand{\ai} {\`{\i} }
+\newcommand{\ao} {\`{o} }
+\newcommand{\au} {\`{u} }
+\newcommand{\bit} {\begin{itemize} }
+\newcommand{\eit} {\end{itemize} }
+
+% Support for easy cross-referencing
+\usepackage[capitalize]{cleveref}
+\crefname{section}{Sec.}{Secs.}
+\Crefname{section}{Section}{Sections}
+\Crefname{table}{Table}{Tables}
+\crefname{table}{Tab.}{Tabs.}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+\ifcvprfinal\pagestyle{empty}\fi
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Parallel KMeans\\
+\large Parallel Programming for Machine Learning}
+
+\author{Niccolò Arati\\
+niccolo.arati@edu.unifi.it\\
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+}
+
+\maketitle
+\thispagestyle{empty}
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+This project aims to analyze the advantages of implementing the KMeans clustering algorithm in parallel. Specifically, we aim to observe the \textbf{speedup}, calculated as the ratio between sequential execution time and parallel execution time, while varying different configurations of the algorithm's main parameters.\\ In addition to the algorithm parameters, we will also analyze the results while varying the number of threads related to the parallel configuration.
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\noindent\large\textbf{Future Distribution Permission}\\
+\indent The author(s) of this report give permission for this document to be distributed to Unifi-affiliated students taking future courses.
+
+
+\section{Introduction}
+\label{sec:intro}
+KMeans is an unsupervised learning clustering algorithm. Given a dataset of points and a number K of clusters, KMeans assigns each point to one of the K clusters, aiming to minimize the following objective function for each point x:
+
+\begin{equation}
+    \label{eq:sse}
+    SSE = \sum_{i = 1}^K \sum_{x \in C_i} \lvert \lvert x - m_i \rvert \rvert^2
+\end{equation}
+
+In \cref{eq:sse}, $C_i$ represents the i-th cluster and $m_i$ the corresponding centroid, while SSE indicates the Sum of Squared Error. The distance measure is relative to each point's dimensions.\\
+The clustering process specified by the algorithm can be summed up into 4 main steps:
+
+\bit
+    \item{\textbf{Initialization} of clusters: K points from the dataset are randomly chosen, and those points will represent the initial cluster centroids;}
+    \item{\textbf{Assignment} of points: each point is assigned to the nearest cluster. To do this, the distance of the point from each centroid is calculated, and the point is assigned to the cluster corresponding to the centroid within the smallest distance;}
+    \item{Calculation of \textbf{centroids}: the centroids are updated by calculating the mean of the coordinates of the points assigned to the cluster they represent;}
+    \item{The process of point assignment and centroid recalculation is repeated until convergence is reached.\\}
+\eit
+
+In this work, \textbf{convergence} was set using a maximum number of iterations, 35, and the percentage of points that change clusters after each iteration. If this percentage drops below 0.1\%, the algorithm terminates.\\
+The purpose of the project is to measure the speedup achieved by parallelizing the algorithm and comparing it with its sequential version. OpenMP was used for parallelization, and the programming language used is C++.\\
+All experiments were conducted on the SSH server "papavero.dinfo.unifi.it".\\
+Additionally, it was chosen to handle also points with number of dimensions greater than 2.
+
+
+\section{Code Structure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.7\linewidth]{ImagesKM/codice.JPG}
+    \caption{Code structure.}
+\end{figure}
+
+CLion was used as the IDE and MinGW as the compiler.\\
+The code includes files from another project with a common directory. The files relevant to this project are:
+
+\bit
+    \item{\textbf{Cluster.h/cpp}: contain the declaration of the Cluster class and the definitions of its methods;}
+    \item{\textbf{KMeans.h/cpp}: contain the declaration of the KMeans class and the definitions of its methods;}
+    \item{\textbf{KMeansOMP.h/cpp}: contain the declaration of the KMeansOMP class and the definitions of its methods with parallelized implementation;}
+    \item{\textbf{Point.h/cpp}: contain the declaration of the Point class and the definitions of its methods;}
+    \item{\textbf{main.cpp}: contains the functions related to the tests and other auxiliary functions.}
+\eit
+
+
+We also consider the folder \textbf{inputs}, it contains 4 CSV files. The information memorized in them will be used to initialize the points for the tests to be clustered with KMeans.
+
+\subsection{Class Point}
+The Point class represents the points on which the algorithm will be executed.\\
+The attributes are: pointId, which specifies a unique identifier for the point; clusterId, which specifies the identifier of the cluster to which the point is assigned; dimensions, indicating the number of coordinates of the point; and values, which is a vector where the coordinates are stored.\\
+There are also getter and setter methods for the various attributes, and two private methods are defined: linetoVecTXT and linetoVecCSV. These methods receive a line from a text or CSV file respectively, and convert the information into the coordinates of the point.\\
+Finally, two constructors are defined, the second one is the copy constructor.
+
+\subsection{Class Cluster}
+The Cluster class represents the clusters on which the points will be grouped through the execution of the algorithm.\\
+The attributes are: clusterId, which indicates a unique identifier for the cluster; centroid, which is a vector where the coordinates of the centroid are stored; and points, a vector containing the points (stored as objects of class Point) assigned to the cluster.\\
+The methods of this class include getters and setters for clusterId, two methods to handle the centroid coordinates (to obtain them and to change them), three methods to handle the points assigned to the cluster (including a method to reset the points vector), and finally, a method that returns the dimension of the cluster (number of points assigned to it).\\
+Finally, there is of course a constructor for the class.
+
+\subsection{Class KMeans}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.7\linewidth]{ImagesKM/km.JPG}
+    \caption{Class KMeans declaration.}
+    \label{fig:km}
+\end{figure}
+
+The KMeans class encapsulates the parameters and the methods to execute the algorithm.\\
+Its attributes include: K, indicating the number of clusters; epochs, indicating the maximum number of iterations before stopping the execution of KMeans; two attributes to store the number of points and their associated dimensions (dimensions and nPoints, assigned via the run() method); and finally clusters, an std::vector item where the K clusters are saved.\\
+The methods are: run, which initializes and executes the algorithm, it requires as input a list of points to cluster and a seed (to eventually replicate results, as initially the centroids are randomly chosen); and two private methods, clearClusters to reset the clusters (used when points need to be reassigned to the nearest clusters) and getNearestClusterId to identify the nearest cluster to a given input point.\\
+The constructor requires only the parameters K and epochs, initially assigning 0 to the attributes nPoints and dimensions.
+
+\subsection{Class KMeansOMP}
+The KMeansOMP class is identical to the KMeans class. The only difference is the implementation of the run method, which is parallelized.\\
+This implementation will be further analyzed in \cref{sec:par}.
+
+\subsection{main.cpp}
+The file contains the tests related to the parallelization of the KMeans algorithm (presented in \cref{sec:exp}), along with the main function that executes the tests and the readPointsCSV function.\\
+This last function is responsible for instantiating objects of the Point class on which the algorithm will be executed. As the name suggests, it is designed to read the values of the point dimensions from CSV files, requiring as input the file name and an integer called "stop," which indicates how many columns will be considered as the dimensions of the Point object.\\
+For each row read from the file, the function initializes the corresponding Point and adds it to a list (std::vector). The list is then returned as output.
+
+
+\section{Parallelization with OpenMP}
+\label{sec:par}
+In the code of the KMeans class, there are several for loops that could potentially be parallelized; however, many of them have relatively few iterations. Therefore, it was decided to keep the execution sequential for those loops.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.8\linewidth]{ImagesKM/forNonP.JPG}
+    \caption{for cycle which memorizes points in their assigned clusters.}
+    \label{fig:forNP}
+\end{figure}
+
+The only case that does not fit into this perspective is the for loop used to assign points to their new cluster, which iterates over all the points to be clustered (\cref{fig:forNP}).\\
+The reason for not parallelizing this loop is that the only instruction within the loop accesses an std::vector which, with parallelization, would be shared among all threads. Experimentally, it was found that concurrent access to this shared resource results in a heap error. One possible solution could be to use a critical directive, but this would get the parallelization pointless as it would impose that only one thread at a time executes the only instruction within the loop.\\
+The code was therefore parallelized in two points, both related to the run method:
+
+\bit
+    \item{Where it assigns points to their nearest cluster;}
+    \item{Where it recalculates the centroid of each cluster.}
+\eit
+
+\subsection{Parallelization of the points assignment to their nearest cluster}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesKM/par1.JPG}
+    \caption{Parallelization of the points assignment to their nearest cluster.}
+    \label{fig:p1}
+\end{figure}
+
+
+In \cref{fig:p1}, it can be observed how an \textbf{omp parallel for} section is defined specifying the shared variables algPoints, which is the list containing all the points to be clustered, and changes, which is a counter related to the number of points that are assigned to a new cluster.\\
+To manage concurrent access to these two variables, an \textbf{omp atomic} directive was used in correspondence of the increment of the variable changes. This ensures that access to the variable is atomic, preventing potential simultaneous variations by more threads.\\
+On the other hand, for algPoints it was not necessary to specify an \textbf{omp critical} directive, as concurrent access to the list is used to modify the clusterId attribute of each element in the list. Therefore, there will never be an attempt of simultaneous access by two or more threads to the same Point object, as indeed would have occurred in \cref{fig:forNP}.\\
+In that case, access to the cluster list is made to add Point objects to the private lists of points associated with Cluster objects, and by doing so there is the possibility of concurrently calling the addPoint method on the same Cluster object.
+
+\subsection{Parallelization of the calculation related to the new centroids coordinates}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesKM/par2.JPG}
+    \caption{Parallelization of the calculation related to the new centroids coordinates.}
+    \label{fig:p2}
+\end{figure}
+
+In \cref{fig:p2}, we observe three nested for loops. It was decided to insert an \textbf{omp parallel for} block in correspondence to the innermost loop, because there is a dependency between the three loops that would prevent a potential omp parallel for section at the outermost loop by specifying a collapse clause.\\
+The indices of the outer for loops are specified as firstprivate, while the cluster size (intended as the number of points belonging to the cluster, which is also the number of iterations of the parallelized for loop) is shared.\\
+The purpose of this code section is to calculate the new centroids of the K clusters. The first for loop iterates over the clusters, the second over the dimensions (interpreted as the number of coordinates) of the centroids, and the third calculates the j-th coordinate of the cluster. To do this, it sums all the j-th coordinates of the cluster points, storing them in a variable called sum, and then divides by the number of points in the cluster.\\
+Because of this, a reduction clause was specified for the sum variable.
+
+
+\section{Experiments conducted}
+\label{sec:exp}
+
+Returning to the main.cpp file, the auxiliary functions written for the tests are as follows:
+
+\bit
+    \item{testKMeansTime: takes as inputs the parameters to execute KMeans, K and epochs, and a list of points to be clustered. The function then measures the execution time of the algorithm and returns it as the output.}
+    \item{testKMeansOMPTime: takes as inputs the parameters for KMeans, a list of points to be clustered, and the number of threads for parallelization. The computational time of the parallelized version of KMeans is measured, which is also the output of the function.}
+    \item{\textbf{testKMeans}: function where the actual tests are performed, executed by the main function. The speedup is calculated using the results of the two functions described earlier, without defining a dedicated function for it.}
+\eit
+
+In general, the main parameter considered for the experiments is obviously the number of threads used for parallelization, while for the others we rely on the algorithm's \textbf{complexity}:
+
+\begin{equation}
+\label{eq:comp}
+    \mathcal{O}(n * K * I * d)
+\end{equation}
+
+In \cref{eq:comp}, it is indicated that the complexity depends on the number of points (n), the number of specified clusters (K), the number of iterations (I), and the number of dimensions associated with individual points (d).\\
+We will therefore take into account all these parameters in the tests, except for the number of iterations for which choices have been made previously and will be kept as indicated in \cref{sec:intro} (in the part concerning convergence).\\
+The test results are saved in specific CSV files contained in the "results" folder, and the graphs are generated using some Python code (not provided).\\
+Below are the tests conducted for the KMeans algorithm.
+
+\subsection{Test1: minimum number of points}
+\label{sec:t1}
+
+With this initial brief test, the aim was to realize what could be the minimum number of points for which parallelization would prove to be useful. The number of points was chosen as a parameter because the parallel part of the code relates to for loops iterating over the points to be clustered.\\
+We would expect that as the number of points (and their dimensions) increases, the speedup between the sequential and parallel versions would be greater with the same number of threads used for parallelization.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ |c|c|c| } 
+\hline
+ & 3000 points 2D & 19000 points 8D \\
+\hline
+4 threads & 0.946291 & 2.23869\\
+\hline
+8 threads & 0.948598 & 3.27011\\
+\hline
+4 threads & 0.989534 & 2.64693\\
+\hline
+8 threads & 0.964235 & 3.29542\\
+\hline
+\end{tabular}
+\vspace*{3mm}
+\caption{Table showing the values of speedup varying with the number of points to be clustered and the number of threads used for the parallel version. The difference between the first two rows and the last two (always indicated with 4 and 8 threads) is that in the last two rows K has an higher value to increase the complexity of the algorithm.}
+\label{table:t1}
+\end{table}
+
+Observing \cref{table:t1}, it is clear that with 3000 points in 2 dimensions, the parallel algorithm has slightly lower performance than the sequential version, although increasing the number of clusters to be searched (from 3 to 6) tends to bring the speedup value closer to 1.\\
+This could indicate that even with a few more points, we could achieve a positive speedup, and indeed with the second smaller dataset available, 19000 points in 8 dimensions, we already have very significant results despite the relatively small number of threads used.\\
+The decision to not use a high number of threads was made to focus on the number of points and to evaluate better their actual impact.\\
+We have results in line with the expectations, demonstrating the actual utility of the parallel approach. In fact, for the sequential version the increase in complexity due to the growing number of points leads to an increase in computational times, while this growth is much more contained in the parallel version. This inevitably leads to an increase in the speedup value.
+
+\subsection{Test2: changing nThreads and K}
+\label{sec:t2}
+
+For the second test, the number of threads and the number of clusters sought by the algorithm varies, as indicated in \cref{fig:t2}.\\
+What we expect is that as the number of threads increases, the parallel algorithm will obviously become faster than the sequential one, resulting in an higher speedup. The number of threads is varied between 2 and 16, considering multiples of 2.\\
+Regarding the number of clusters, since they affect the complexity as K increases, the computational time of the sequential algorithm will also increase. Therefore, we would expect that, with more clusters and the same number of threads, parallelization becomes more impactful.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesKM/graph_t2.png}
+    \caption{Graph showing the values of speedup varying with nThreads. The 3 lines refer to different values of K, with green representing 4 clusters, red representing 12, and blue representing 25. The algorithm was executed on 500,000 points with 5 dimensions.}
+    \label{fig:t2}
+\end{figure}
+
+It is observed that for all 3 values of K, the increasing number of threads used for parallelization also increases the speedup, as expected, although the growth is not equal for all 3 lines.\\
+It is also noticeable that with a greater number of clusters, the increasing number of threads leads to a higher speedup value, especially when compared with the executions associated with a lower value of K. For example, with 16 threads and 4 clusters, the speedup is 2.81982, while with 16 threads and 25 clusters the speedup is 4.06303.\\
+During testing we stopped at a maximum number of threads equal to 16, but this can obviously be increased. However, the growth of the speedup will not always be constant. We expect that after a certain number of threads, the CPU will become saturated, and therefore we will observe an attenuation of the trend observed in the graphs (i.e. the speedup will remain unchanged as the number of threads increases, because the time spent managing the threads will become greater than the time gained from dividing the work among the threads).\\
+
+\subsection{Test3: varying K}\
+\label{sec:t3}
+
+In this final test, the number of clusters K generated by the KMeans algorithm is varied, with a fixed number of threads for the parallel version.\\
+The considered values of K are 4, 10, 20, and 30.\\
+We would expect that, since K positively influences the complexity of the algorithm, increasing K would also increase the speedup obtained with the parallelized version of KMeans.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesKM/barre.png}
+    \caption{Speedup by varying K with a fixed number of threads set to 8. The algorithm was executed on 4 million points with 3 dimensions.}
+    \label{fig:t3}
+\end{figure}
+
+Again, the number of threads was kept low to isolate the actual impact of the number of clusters on performance.\\
+The results shown in \cref{fig:t3} are in line with expectations. We notice that as K increases, the speedup also becomes higher, indicating that the parallelized version of KMeans handles the increase in algorithm complexity better (with the same parameters as the sequential version).
+
+\subsection{Final considerations on number of points}
+In addition to the first test (\cref{sec:t1}), we can make general considerations about the parameter indicating the number of points on which we execute the algorithm by simply comparing the results of the other two tests, as they are performed on an increasingly greater number of points (and their associated dimensions).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ |c|c| } 
+\hline
+ & Speedup with 8 threads \\
+\hline
+3000 points 2D & 0.948598\\
+\hline
+19000 points 8D & 3.27011\\
+\hline
+500000 points 5D & 2.47619\\
+\hline
+4mln points 3D & 2.17211\\
+\hline
+\end{tabular}
+\vspace*{3mm}
+\caption{"Table with the values of speedup by varying the number of points to be clustered, with a number of threads set to 8."}
+\label{table:t4}
+\end{table}
+
+The configurations most similar across the various tests have been selected and shown in \cref{table:t4}. Aside from the number of points and dimensions, only the number of clusters K varies slightly (3 for the first row, 5 for the second, and 4 for the last two).\\
+We observe that as the algorithm's complexity increases due to the number of points and dimensions, initially with the same configuration relative to other parameters, we observe an increase in speedup. However, later on, while the speedup remains positive it decreases.\\
+This is likely due to a slowdown in the heap, which cannot handle that particular number of values (third and fourth rows). Looking at the results of the third test (\cref{sec:t3}), we can infer another factor leading to this conclusion, namely the value of K. By distributing the points across more clusters (25), we observe a speedup of 3.11685, which is a result comparable to the best configuration presented in the table analyzed in this section.\\
+Another factor that influences this is undoubtedly the number of threads used. By looking at the results of the second test (\cref{sec:t2}), we see that with 16 threads the results are better (3.50519) than those analyzed in \cref{table:t4}.\\
+The presented results serve as insight for managing the arising complexity due to an increasing number of points and dimensions.
+
+\end{document}
