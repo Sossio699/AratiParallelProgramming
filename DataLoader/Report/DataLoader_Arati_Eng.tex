@@ -1,0 +1,299 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+\usepackage{url}
+
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+%\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+
+\cvprfinalcopy % *** Uncomment this line for the final submission
+
+\def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+\newcommand{\e} {\`e }
+\newcommand{\E} {\`E }
+\newcommand{\aee} {\'{e} }
+\newcommand{\aea} {\`{a} }
+\newcommand{\ai} {\`{\i} }
+\newcommand{\ao} {\`{o} }
+\newcommand{\au} {\`{u} }
+\newcommand{\bit} {\begin{itemize} }
+\newcommand{\eit} {\end{itemize} }
+
+% Support for easy cross-referencing
+\usepackage[capitalize]{cleveref}
+\crefname{section}{Sec.}{Secs.}
+\Crefname{section}{Section}{Sections}
+\Crefname{table}{Table}{Tables}
+\crefname{table}{Tab.}{Tabs.}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+\ifcvprfinal\pagestyle{empty}\fi
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Parallel DataLoader\\
+\large Parallel Programming for Machine Learning\\Project Work in Artificial Intelligence Programming}
+
+\author{Niccolò Arati\\
+niccolo.arati@edu.unifi.it\\
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+}
+
+\maketitle
+\thispagestyle{empty}
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+This project aims to analyze the benefits of implementing a Dataloader with parallelization. In particular, we want to observe the \textbf{speedup}, calculated as the ratio between sequential execution time and parallel execution time, while varying different configurations for the Dataloader. \\
+The results will also be analyzed changing the number of worker processes associated to parallelization.
+
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\noindent\large\textbf{Future Distribution Permission}\\
+\indent The author(s) of this report give permission for this document to be distributed to Unifi-affiliated students taking future courses.
+
+
+\section{Introduction}
+\label{sec:int}
+A Dataloader is a class that provides a flexible and efficient way to load data. Its primary application involves loading data into a model for training or inference.\\
+In this work, we will focus on loading images and applying to them data augmentation techniques.\\
+The purpose of the project is to measure the speedup achieved by parallelizing the dataloader and comparing it with its sequential version. The programming language used is Python, and for parallelization Multiprocessing was exploited.\\
+All experiments were conducted on a PC with Windows 10 as the operating system and an Intel Pentium Gold G5400 CPU.
+
+
+\section{Code Structure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.7\linewidth]{ImagesDL/codice.JPG}
+    \caption{Code structure.}
+    \label{fig:cod}
+\end{figure}
+
+The IDE employed for this project is PyCharm.\\
+The code consists of multiple files:
+
+\bit
+    \item{\textbf{DataLoader.py}: contains the sequential implementation of the DataLoader class, defined as an iterable;}
+    \item{\textbf{DataLoaderPar.py}: contains the parallelized implementation of the DataLoaderPar class, which extends the DataLoader class;}
+    \item{\textbf{Dataset.py}: contains the implementation of the Dataset class;}
+    \item{\textbf{main.py}: contains functions related to the tests, as well as the main() function.}
+\eit
+
+The \textbf{inputs} folder is also considered, it contains 111 subfolders with 1000 images each on which the Dataloader will be called later.\\
+Since we will use images as data to be loaded with the Dataloader, as specified in \cref{sec:int}, the implementation only considers images and does not generalize to other types of data.
+
+\subsection{Class DataLoader}
+The DataLoader class accesses the dataset of images to be loaded and for each iteration it returns a certain number of them in batches.\\
+Four functions are defined for DataLoader objects:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesDL/dl.JPG}
+    \caption{Dataloader Class declaration.}
+    \label{fig:dl}
+\end{figure}
+
+\bit
+    \item{\textbf{\_\_init\_\_} initializes the dataloader and its attributes, requiring as parameters the dataset (an object of the Dataset class), the batch size to load, and an optional boolean to randomize the order of the images. Additionally, it defines an integer index set to 0, which will be used to iterate through the images.}
+    \item{\textbf{\_\_iter\_\_} returns the object (DataLoader) to be iterated over.}
+    \item{\textbf{\_\_next\_\_} loads a batch of images by calling the get method for a number of times equal to the value of the batch\_size attribute, and returns it in output.}
+    \item{\textbf{get} loads an image from the dataset and increments by one the index attribute.}
+\eit
+
+\subsection{Class DataLoaderPar}
+Subclass of DataLoader, for the method \_\_init\_\_ it requires additional parameters compared to the DataLoader class. This method also initializes some data structures that will be discussed in \cref{sec:par} with other functions defined for this class.
+
+\subsection{Class Dataset}
+The Dataset class represents a wrapper for the actual dataset to be loaded. In our case, it receives the paths relative to the location of the images and, when requested from the DataLoader, loads them into memory and returns them.\\
+The class has 3 methods:
+
+\bit
+    \item{\textbf{\_\_init\_\_}} initializes the dataset, it requires parameters such as size, which represents the dataset's dimension, and im\_paths, which is a list containing the paths of the images to be loaded. These two parameters are then saved as attributes of the class.
+    \item{\_\_len\_\_} simply returns the size of the dataset.
+    \item{\textbf{\_\_getitem\_\_}} takes as input the index of the image to be loaded and then, by that index, it accesses the path of the desired image and loads it (using the cv2 package).
+\eit
+
+\subsection{main.py}
+In this file there are tests related to the parallelization of the Dataloader (presented in \cref{sec:exp}) along with the main function, whose purpose is to execute the tests defined in the file.\\
+To generate strings containing the paths of the images, the pathlib library was used.
+
+
+\section{Parallelization with Multiprocessing}
+\label{sec:par}
+The code of the DataLoaderPar class defines a function called \textbf{worker\_funct}, which will be executed by the Worker processes defined through Multiprocessing.\\
+The processes are generated through the \_\_init\_\_ method of the class, and then there are other methods for their management, which will be presented in the following subsections.\\
+The idea behind the parallelization of the Dataloader is that when a batch of images is loaded, it is assumed that these are subjected to a transformation by a certain process (with Albumentations, \cref{sec:exp}). While the images are going through transformation, we want to use Worker processes to prefetch the next batch so that it (or most of it) is already ready in memory for transformation.
+
+\subsection{Function associated with Worker Processes}
+\label{sec:fw}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesDL/wf.JPG}
+    \caption{Code of function worker\_funct}
+    \label{fig:wf}
+\end{figure}
+
+
+From the code presented in \cref{fig:wf}, the function requires 3 parameters: the dataset to load, an index\_queue, and an output\_queue (both are multiprocessing.Queue objects). The output\_queue is shared among all processes, while each process has its own private index\_queue associated with it.\\
+All the index\_queue objects contain the indices of the elements to be loaded. The Worker process, following the function, takes an index from the queue (if it is not empty) and inserts the corresponding image from the dataset into the output\_queue, paired with the index.
+
+\subsection{Method \_\_init\_\_}
+
+
+The \_\_init\_\_ method requires the same parameters as the DataLoader class, as well as a num\_workers parameter specifying the number of Worker processes to generate, and a prefetch\_batches parameter specifying the maximum number of batches to prefetch.\\
+In addition to initializing the attributes corresponding to the input parameters, this method also initializes the output\_queue (\cref{sec:fw}), a list that will contain the index\_queues associated with the Worker processes, another list that will contain the Worker processes themselves, an attribute called worker\_cycle that will be used to iterate through the processes in order to assign the indices of the images to be loaded to their index\_queues, a list called cache (\cref{sec:load}), and a prefetch\_index attribute that keeps track of the prefetched elements (different from the index attribute as index keeps track of the images actually processed by whoever is using the DataLoaderPar).\\
+Subsequently, the method initializes the Worker processes and their respective index\_queues:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesDL/spawnW.JPG}
+    \caption{Code related to the initialization of Worker processes and their associated index\_queues.}
+    \label{fig:spW}
+\end{figure}
+
+
+As shown in \cref{fig:spW}, a multiprocessing.Process is generated with the function specified earlier as its target, and as its attributes the dataset and the two queues (a private index\_queue and a shared output\_queue).\\
+The Worker process is specified as a \textbf{daemon}, as we want it to act in background compared to the image transformation process with Albumentations.\\
+Finally, the prefetch function, presented in \cref{sec:load}, is called.
+
+\subsection{Image loading and Dataloader management}
+\label{sec:load}
+
+The function \textbf{prefetch} handles the management of image prefetching. First of all, it checks whether the end of the dataset has been reached or if it is more than two batches ahead of the images actually loaded. Then, it assigns the indices of the images to be prefetched to the index\_queues associated with the Worker processes.\\
+To do this, it leverages the worker\_cycle attribute, and consequently updates the prefetch index.\\
+On the other hand, the \textbf{get} method handles the actual loading of images and thus the current batch.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesDL/get.JPG}
+    \caption{Code of method get}
+    \label{fig:get}
+\end{figure}
+
+
+Observing the code in \cref{fig:get}, we can summarize it into 3 points:
+
+\bit
+    \item{It checks if the index of the image to be loaded is present in the list defined by the cache attribute. If it is present, it is removed from the list and returned as output.}
+    \item{Otherwise, it checks the output\_queue. If the element obtained has an index corresponding to the one of the image to be loaded, it is returned as output.}
+    \item{Otherwise, the element is added to the cache, waiting when the index of the elements to be loaded reaches the index of the element in question (first point).}
+\eit
+
+The \textbf{\_\_iter\_\_} method, as for the DataLoader class, returns the object to be iterated over, thus reinitializing the attributes related to the index of the image to be loaded (index), the index of the image to be prefetched (prefetch\_index), and the cache list.
+
+Finally, the \textbf{\_\_delete\_\_} method terminates the Worker processes.
+
+\section{Experiments conducted}
+\label{sec:exp}
+
+Returning to the main.py file, the functions written for the tests are as follows:
+
+\bit
+    \item{\textbf{testDataLoaderWT}: executed by the main function, calculates the speedup between the sequential dataloader and the parallel one, varying some configurations which consider the number of workers used for parallelization and the complexity of the transformations applied to the images in each batch.}
+    \item{\textbf{testDataLoaderB}: also executed by the main function, but this time the speedups are calculated mainly considering a specified batch size.}
+\eit
+
+The parameters considered for the experiments are therefore the number of workers used for Multiprocessing, the batch size of images, and the complexity of the transformations for the images.\\
+In particular, for this last part, Albumentations was used. In \cref{fig:alb1}, the simplest transformation defined is shown (for the more complex ones, essentially the transformation shown in the figure is applied multiple times).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 1\linewidth]{ImagesDL/alb1.JPG}
+    \caption{Base transform defined with Albumentations}
+    \label{fig:alb1}
+\end{figure}
+
+The test results are saved in specific CSV files located in the \textbf{results} folder.\\
+Below there are the tests conducted for the Dataloader.
+
+
+\subsection{Test1: changing n\_workers and albumentations}
+
+
+With the first test, executed by the testDataLoaderWT function, we aim to assess the impact of the number of worker processes while varying the complexity of the transformations applied with Albumentations between batch loads.\\
+The batch\_size value is kept constant at 300.\\
+The expected outcome of the test is that, as the complexity of the image transformation process increases, the sequential version of the Dataloader will increase the computational time required to process all batches. The parallelized version should instead still maintain better performance, because while the image transformation process is running there are also worker processes responsible for prefetching the next batch.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ |c|c|c|c|c|c| } 
+\hline
+ & 1 w & 2 ws & 4 ws & 6 ws & 8 ws\\
+ \hline
+1stAlb & 1.03472 & 1.38500 & 1.87490 & 2.14634 & 1.9381\\
+\hline
+2ndAlb & 3.55765 & 5.02616 & 6.39762 & 7.16192 & 4.50477\\
+\hline
+3rdAlb & 4.29092 & 5.94258 & 6.81652 & 4.65382 & 2.74523\\
+\hline
+4thAlb & 4.52743 & 6.68475 & 5.05657 & 3.58080 & 2.15300\\
+\hline
+\end{tabular}
+\vspace*{3mm}
+\caption{Table with speedup values varying with the number of worker processes and the complexity of the transformations applied to the images. Remember from \cref{sec:par} that the total number of processes running is given by the number of workers plus one, corresponding to Albumentation.}
+\label{table:t1}
+\end{table}
+
+The number of workers considered for the experiment varies between the values of 1, 2, 4, 6, and 8, while 4 possible image transformations are considered in increasing order of complexity.\\
+Observing the results presented in \cref{table:t1}, we notice that the predictions were accurate. By already looking at the first column, so just utilizing a single worker process working in parallel with the Albumentations process, we see significant improvements in the speedup value as the complexity of the image transformations increases.\\
+However, there are limitations to the performance improvement, likely due to the hardware used for the experiment. It is observed that using 8 worker processes consistently leads to performance degradation compared to the same configuration with 6 worker processes.\\
+Furthermore, observing the rows of the table, there is a loss of the speedup value with less number of workers as the complexity of the Albumentations process increases. Sure enough, with the first and second image transformation processes the speedup decreases only with 8 workers (compared to the previous value of workers), while with the third transformation, it decreases from 4 to 6 workers, and with the fourth transformation, it decreases from 2 to 4 workers.\\
+This may be due to CPU saturation, as it has to handle an increasingly complex transformation process and the images in the considered batch, in addition to a potentially larger number of worker processes.\\
+In any case, observing the speedup values, there is always an improvement in performance compared to the sequential version. The only case where performance is practically equivalent is when the simplest transformation is applied while a single Worker process prefetches the next two batches (row 1, column 1).
+
+\subsection{Test2: varying batch\_size}
+
+In this second test, executed by the testDataLoaderB function, speedup values are calculated by varying the sizes of the loaded batches, while keeping the number of Worker processes at 2 and the image transformation process constant (equivalent to the second process applied in the previous test).\\
+The number of workers is kept relatively low and the transformation is not overly complex in order to isolate the impact of batch\_size compared to the other parameters.\\
+The expectations for this experiment are to observe an increase in speedup as the batch size grows, exploiting the parallel Dataloader's ability to prefetch images for the next batch while those of the current batch are processed with Albumentations.\\
+The batch\_size is varied between the values of 10, 50, 100, 300, 500, and 1000.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ |c|c| } 
+\hline
+ & SpeedUp\\
+ \hline
+batch\_size = 10 & 1.54175\\
+\hline
+batch\_size = 50 & 1.59989\\
+\hline
+batch\_size = 100 & 1.56747\\
+\hline
+batch\_size = 300 & 1.55132\\
+\hline
+batch\_size = 500 & 1.48342\\
+\hline
+batch\_size = 1000 & 1.72745\\
+\hline
+\end{tabular}
+\vspace*{3mm}
+\caption{Table with speedup values varying with the batch size for the images.}
+\label{table:t2}
+\end{table}
+
+Observing the results in \cref{table:t2}, it can be inferred that the parameter related to the size of the batch of loaded images may not have much influence on the speedup value.\\
+In fact, all speedup values are comparable, the only one that deviates more from the others being the speedup related to a batch\_size of 1000.\\
+This is still an acceptable result, as the batch\_size value is usually based on the task in which the Dataloader is utilized, or on the size of the available data, and it makes sense that we shouldn't be forced to increase the batch size just to achieve better performance in terms of speedup (and therefore computational time).
+
+\end{document}
